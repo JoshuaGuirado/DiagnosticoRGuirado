@@ -6,11 +6,20 @@ import { Button } from '@/src/components/ui/button';
 import { 
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer
 } from 'recharts';
-import { Download, ChevronLeft, Lock, FileText, ClipboardList, TrendingUp, Star, Phone, CheckCircle2, AlertTriangle, Printer } from 'lucide-react';
+import { Download, ChevronLeft, Lock, FileText, ClipboardList, TrendingUp, Star, Phone, CheckCircle2, AlertTriangle, MessageSquare } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { toPng } from 'html-to-image';
 import { diagnosticoFranqueabilidade } from '../data/questions';
 import { cn } from '@/src/lib/utils';
+
+// Timezone-agnostic date formatter
+const formatDateString = (dateStr: string) => {
+  if (!dateStr) return '';
+  const parts = dateStr.split('T')[0].split('-');
+  if (parts.length !== 3) return dateStr;
+  const [year, month, day] = parts;
+  return `${day}/${month}/${year}`;
+};
 
 export function Result() {
   const { id } = useParams<{ id: string }>();
@@ -141,10 +150,9 @@ export function Result() {
     if (!reportRef.current) return;
     setIsExporting(true);
     try {
-      // Pequeno delay para garantir que o container escondido renderizou
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      const width = 1000; // Largura fixa ideal para folha A4 em pixel ratio alto
+      const width = 1000;
       const height = reportRef.current.scrollHeight;
       
       const dataUrl = await toPng(reportRef.current, { 
@@ -291,7 +299,7 @@ export function Result() {
               </div>
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase block">Data do preenchimento</span>
-                <span className="font-semibold text-gray-700 block mt-1">{new Date(date).toLocaleDateString('pt-BR')}</span>
+                <span className="font-semibold text-gray-700 block mt-1">{formatDateString(date)}</span>
               </div>
             </div>
 
@@ -314,8 +322,8 @@ export function Result() {
                 <thead>
                   <tr className="bg-gray-50 text-gray-500 border-b border-gray-100 font-bold">
                     <th className="py-4 px-4 w-12 text-center">Nº</th>
-                    <th className="py-4 px-4 w-48">Dimensão</th>
-                    <th className="py-4 px-4 w-64">Item avaliado</th>
+                    <th className="py-4 px-2 w-48 text-left">Dimensão</th>
+                    <th className="py-4 px-4 w-64 text-left">Item avaliado</th>
                     <th className="py-4 px-4">Resposta Escolhida</th>
                     <th className="py-4 px-4 w-20 text-center">Pontos</th>
                     <th className="py-4 px-4 w-44">Situação</th>
@@ -329,23 +337,21 @@ export function Result() {
 
                     return (
                       <tr key={q.id} className="hover:bg-gray-50/50">
-                        <td className="py-3 px-4 font-semibold text-gray-400 text-center">{idx + 1}</td>
-                        <td className="py-3 px-4 text-xs font-semibold uppercase text-gray-500">
-                          <span className={cn(
-                            "px-2 py-0.5 rounded-md",
-                            q.categoryId === 'marca' ? 'bg-blue-50 text-blue-700' :
-                            q.categoryId === 'fin' ? 'bg-emerald-50 text-emerald-700' :
-                            q.categoryId === 'ope' ? 'bg-purple-50 text-purple-700' :
-                            q.categoryId === 'gestao' ? 'bg-amber-50 text-amber-700' :
-                            'bg-pink-50 text-pink-700'
-                          )}>
-                            {q.categoryName}
-                          </span>
+                        <td className="py-3.5 px-4 font-semibold text-gray-400 text-center">{idx + 1}</td>
+                        <td className={cn(
+                          "py-3.5 px-2 text-xs font-bold uppercase text-left",
+                          q.categoryId === 'marca' ? 'text-blue-700' :
+                          q.categoryId === 'fin' ? 'text-emerald-700' :
+                          q.categoryId === 'ope' ? 'text-purple-700' :
+                          q.categoryId === 'gestao' ? 'text-amber-700' :
+                          'text-pink-700'
+                        )}>
+                          {q.categoryName}
                         </td>
-                        <td className="py-3 px-4 font-medium text-[#1A2840]">{q.text}</td>
-                        <td className="py-3 px-4 text-gray-600">{selectedOption?.text || '-'}</td>
-                        <td className="py-3 px-4 font-bold text-center text-[#1A2840]">{score}</td>
-                        <td className="py-3 px-4">
+                        <td className="py-3.5 px-4 font-semibold text-[#1A2840] leading-snug">{q.text}</td>
+                        <td className="py-3.5 px-4 text-gray-600 text-xs leading-relaxed">{selectedOption?.text || '-'}</td>
+                        <td className="py-3.5 px-4 font-bold text-center text-[#1A2840]">{score}</td>
+                        <td className="py-3.5 px-4">
                           <span className={cn(
                             "inline-block px-2.5 py-0.5 rounded-full text-[11px] border text-center min-w-[120px]",
                             situation.bg
@@ -369,7 +375,7 @@ export function Result() {
               <div className="md:col-span-2 space-y-1">
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Pré-Diagnóstico Finalizado</span>
                 <h1 className="text-3xl font-extrabold text-[#1A2840]">{companyName || clientName}</h1>
-                <p className="text-sm text-gray-500">Segmento: {segment} • Realizado em {new Date(date).toLocaleDateString('pt-BR')}</p>
+                <p className="text-sm text-gray-500">Segmento: {segment} • Realizado em {formatDateString(date)}</p>
               </div>
               <div className="flex items-center justify-between sm:justify-end gap-6 bg-[#1A2840] text-white p-5 rounded-2xl">
                 <div className="text-left">
@@ -391,17 +397,17 @@ export function Result() {
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
                       <tr className="bg-gray-50 text-gray-500 font-bold border-b border-gray-100">
-                        <th className="py-3 px-3">Dimensão</th>
+                        <th className="py-3 px-2 text-left">Dimensão</th>
                         <th className="py-3 px-3 text-center">Pontos obtidos</th>
                         <th className="py-3 px-3 text-center">Aproveitamento (%)</th>
                         <th className="py-3 px-3 text-center">Peso (%)</th>
                         <th className="py-3 px-3 text-center">Contribuição (%)</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100 font-medium text-gray-700">
+                    <tbody className="divide-y divide-gray-100 font-semibold text-gray-700">
                       {dimensionRows.map((row, i) => (
                         <tr key={i} className="hover:bg-gray-50/50">
-                          <td className="py-3 px-3 font-semibold">{row.name}</td>
+                          <td className="py-3 px-2 text-left text-gray-800 font-bold">{row.name}</td>
                           <td className="py-3 px-3 text-center">{row.obtained} / {row.max}</td>
                           <td className="py-3 px-3 text-center">{row.aproveitamento}%</td>
                           <td className="py-3 px-3 text-center text-gray-400">{row.weight}%</td>
@@ -409,7 +415,7 @@ export function Result() {
                         </tr>
                       ))}
                       <tr className="bg-gray-50 font-bold text-gray-800 border-t border-gray-200">
-                        <td className="py-3 px-3">TOTAL</td>
+                        <td className="py-3 px-2 text-left font-extrabold text-[#1A2840]">TOTAL</td>
                         <td className="py-3 px-3 text-center">
                           {dimensionRows.reduce((a, b) => a + b.obtained, 0)} / 250
                         </td>
@@ -441,7 +447,7 @@ export function Result() {
             </div>
 
             {/* Classification Card */}
-            <div className={cn("p-6 rounded-2xl border-l-4 shadow-sm", classification.bg)}>
+            <div className={cn("p-6 rounded-2xl border-l-4 shadow-sm border", classification.bg)}>
               <span className="text-[10px] font-extrabold uppercase tracking-widest block opacity-75">Classificação do Negócio</span>
               <h3 className={cn("text-xl font-black mt-1 uppercase tracking-wide", classification.color)}>{classification.text}</h3>
               <p className="text-gray-700 leading-relaxed text-sm mt-3">{classification.description}</p>
@@ -470,21 +476,26 @@ export function Result() {
               </div>
             )}
 
-            {/* Next Steps CTA */}
-            <div className="bg-[#1A2840] text-white p-6 md:p-8 rounded-2xl space-y-4">
-              <h3 className="text-lg font-bold text-[#F3C611] flex items-center gap-3">Próximo Passo Recomendado</h3>
-              <p className="text-gray-300 text-xs md:text-sm leading-relaxed">
-                Este pré-diagnóstico mostra <strong>ONDE</strong> estão as maiores lacunas do seu modelo. O passo seguinte é definir <strong>COMO</strong> resolvê-las, em que ordem e com qual viabilidade financeira — e é exatamente isso que a R.Guirado Consultoria faz na formatação completa de franquias: diagnóstico detalhado, engenharia financeira do franqueador e franqueado, manuais operacionais, COF/contrato de franquia, arquitetura de rede e plano de expansão comercial.
-              </p>
-              <p className="text-gray-300 text-xs leading-relaxed">
-                Agende uma conversa de 30 minutos, sem compromisso, para interpretarmos juntos o seu resultado e priorizarmos o que gera mais valor financeiro primeiro.
-              </p>
-              <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-white/60 pt-2">
-                <span>R.Guirado Consultoria</span>
-                <span>•</span>
-                <span>WhatsApp: (44) 99966-5711</span>
-                <span>•</span>
-                <span>E-mail: contato@rguirado.com.br</span>
+            {/* Premium CTA Contact Screen */}
+            <div className="bg-[#1A2840] border border-[#1F4761]/30 rounded-3xl p-8 text-center text-white space-y-6 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-[#1F4761]/25 rounded-full blur-3xl pointer-events-none"></div>
+              <div className="max-w-xl mx-auto space-y-4 relative z-10">
+                <span className="text-[10px] font-extrabold text-[#F3C611] uppercase tracking-widest block">Consultoria Especializada</span>
+                <h3 className="text-xl md:text-2xl font-black tracking-wide uppercase">Quer agendar uma reunião com os especialistas?</h3>
+                <p className="text-xs text-gray-300 leading-relaxed">
+                  Transforme este pré-diagnóstico em um plano executivo real, com prazos, responsáveis e orçamentos claros. Fale diretamente com a equipe da R.Guirado Consultoria pelo WhatsApp. Clique no botão abaixo para iniciar o contato com um de nossos colaboradores.
+                </p>
+                <div className="pt-2">
+                  <a
+                    href={`https://wa.me/${whatsappNumber}?text=${whatsappMessage}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-3 bg-[#25D366] hover:bg-[#20ba5a] text-white font-extrabold py-3.5 px-8 rounded-xl shadow-lg transition-transform active:scale-95 text-sm"
+                  >
+                    <Phone className="w-4.5 h-4.5 fill-white stroke-none" /> Entre em contato já
+                  </a>
+                </div>
+                <p className="text-[10px] text-white/50 pt-1">Suporte WhatsApp: 44 99966-5711 • R.Guirado Consultoria</p>
               </div>
             </div>
           </div>
@@ -504,7 +515,7 @@ export function Result() {
                 <thead>
                   <tr className="bg-gray-50 text-gray-500 border-b border-gray-100 font-bold">
                     <th className="py-4 px-4 w-12 text-center">Nº</th>
-                    <th className="py-4 px-4 w-52">Item avaliado</th>
+                    <th className="py-4 px-4 w-52 text-left">Item avaliado</th>
                     <th className="py-4 px-4 w-60">Sua resposta</th>
                     <th className="py-4 px-4 w-16 text-center">Pontos</th>
                     <th className="py-4 px-4 w-40 text-center">Prioridade</th>
@@ -523,7 +534,7 @@ export function Result() {
                         score !== undefined && score <= 3 ? "bg-red-50/10" : ""
                       )}>
                         <td className="py-4 px-4 font-semibold text-gray-400 text-center">{idx + 1}</td>
-                        <td className="py-4 px-4 font-bold text-[#1A2840] leading-snug">{q.text}</td>
+                        <td className="py-4 px-4 font-bold text-left text-[#1A2840] leading-snug">{q.text}</td>
                         <td className="py-4 px-4 text-xs text-gray-600 leading-relaxed">{selectedOption?.text || '-'}</td>
                         <td className="py-4 px-4 font-bold text-center text-[#1A2840]">{score}</td>
                         <td className="py-4 px-4 text-center">
@@ -549,9 +560,9 @@ export function Result() {
               {/* WhatsApp Contact Box */}
               <div className="bg-[#F8F0E3]/70 border border-[#1F4761]/10 p-6 rounded-2xl flex flex-col justify-between space-y-4">
                 <div className="space-y-2">
-                  <h3 className="font-bold text-[#1A2840] text-md">Quer agendar uma reunião com os especialistas?</h3>
+                  <h3 className="font-bold text-[#1A2840] text-sm uppercase tracking-wide">Quer agendar uma reunião com os especialistas?</h3>
                   <p className="text-xs text-gray-600 leading-relaxed">
-                    Transforme este diagnóstico em um cronograma real com prazos, responsáveis e custos. Fale diretamente com a equipe da R.Guirado Consultoria pelo WhatsApp. Clique no botão abaixo para iniciar uma conversa com nossa equipe!
+                    Transforme este diagnóstico em um plano estratégico real para estruturar sua franquia de forma lucrativa e segura. Entre em contato direto com a equipe R.Guirado.
                   </p>
                 </div>
                 <a
@@ -560,7 +571,7 @@ export function Result() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold py-3 px-6 rounded-xl shadow-md transition-colors text-sm"
                 >
-                  <Phone className="w-4 h-4 fill-white" /> Entre em contato já
+                  <Phone className="w-4 h-4 fill-white stroke-none" /> Entre em contato já
                 </a>
               </div>
 
@@ -640,7 +651,7 @@ export function Result() {
               <div><strong>Tempo de Operação:</strong> {operationTime || '-'}</div>
               <div><strong>Unidades Próprias:</strong> {ownUnits || '-'}</div>
               <div><strong>Faturamento Médio:</strong> {revenue || '-'}</div>
-              <div><strong>Data do Diagnóstico:</strong> {new Date(date).toLocaleDateString('pt-BR')}</div>
+              <div><strong>Data do Diagnóstico:</strong> {formatDateString(date)}</div>
             </div>
           </div>
 
@@ -651,7 +662,7 @@ export function Result() {
               <table className="w-full text-left border-collapse text-[11px]">
                 <thead>
                   <tr className="bg-gray-50 text-gray-500 font-bold border-b">
-                    <th className="py-2.5 px-3">Dimensão</th>
+                    <th className="py-2.5 px-2 text-left">Dimensão</th>
                     <th className="py-2.5 px-3 text-center">Pontos obtidos</th>
                     <th className="py-2.5 px-3 text-center">Aproveitamento (%)</th>
                     <th className="py-2.5 px-3 text-center">Peso (%)</th>
@@ -661,7 +672,7 @@ export function Result() {
                 <tbody className="divide-y font-medium text-gray-700">
                   {dimensionRows.map((row, i) => (
                     <tr key={i}>
-                      <td className="py-2.5 px-3 font-semibold">{row.name}</td>
+                      <td className="py-2.5 px-2 text-left font-bold text-gray-800">{row.name}</td>
                       <td className="py-2.5 px-3 text-center">{row.obtained} / {row.max}</td>
                       <td className="py-2.5 px-3 text-center">{row.aproveitamento}%</td>
                       <td className="py-2.5 px-3 text-center text-gray-400">{row.weight}%</td>
@@ -669,7 +680,7 @@ export function Result() {
                     </tr>
                   ))}
                   <tr className="bg-gray-50 font-bold text-gray-800 border-t-2">
-                    <td className="py-2.5 px-3">TOTAL</td>
+                    <td className="py-2.5 px-2 text-left font-extrabold text-[#1A2840]">TOTAL</td>
                     <td className="py-2.5 px-3 text-center">{dimensionRows.reduce((a, b) => a + b.obtained, 0)} / 250</td>
                     <td className="py-2.5 px-3 text-center">{Math.round((dimensionRows.reduce((a, b) => a + b.obtained, 0) / 250) * 1000) / 10}%</td>
                     <td className="py-2.5 px-3 text-center text-gray-400">100%</td>
@@ -710,8 +721,8 @@ export function Result() {
             <thead>
               <tr className="bg-gray-100 text-gray-500 border-b font-bold">
                 <th className="py-2 px-2 w-8 text-center border">Nº</th>
-                <th className="py-2 px-2 w-32 border">Dimensão</th>
-                <th className="py-2 px-2 w-48 border">Item avaliado</th>
+                <th className="py-2 px-2 w-32 border text-left">Dimensão</th>
+                <th className="py-2 px-2 w-48 border text-left">Item avaliado</th>
                 <th className="py-2 px-2 w-12 text-center border">Nota</th>
                 <th className="py-2 px-2 border">O que fazer (Recomendação de Consultoria)</th>
               </tr>
@@ -724,8 +735,8 @@ export function Result() {
                 return (
                   <tr key={q.id} className={cn(score !== undefined && score <= 3 ? "bg-red-50/20" : "")}>
                     <td className="py-2 px-2 text-center border">{idx + 1}</td>
-                    <td className="py-2 px-2 border text-gray-400 uppercase text-[8px] font-bold">{q.categoryName}</td>
-                    <td className="py-2 px-2 border font-bold text-gray-800">{q.text}</td>
+                    <td className="py-2 px-2 border text-gray-400 uppercase text-[8px] font-extrabold text-left">{q.categoryName}</td>
+                    <td className="py-2 px-2 border font-bold text-gray-800 text-left">{q.text}</td>
                     <td className="py-2 px-2 text-center border font-bold">{score}</td>
                     <td className="py-2 px-2 border text-gray-600 leading-normal text-[9px]">
                       {selectedOption?.recommendation || '-'}
@@ -737,7 +748,7 @@ export function Result() {
           </table>
 
           <div className="border-t pt-4 text-center text-[9px] text-gray-400">
-            Relatório gerado em {new Date(date).toLocaleDateString('pt-BR')} • R.Guirado Consultoria de Franquias. Todos os direitos reservados.
+            Relatório gerado em {formatDateString(date)} • R.Guirado Consultoria de Franquias. Todos os direitos reservados.
           </div>
         </div>
       </div>

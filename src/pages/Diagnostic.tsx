@@ -5,15 +5,19 @@ import { Button } from '@/src/components/ui/button';
 import { diagnosticoFranqueabilidade } from '@/src/data/questions';
 import { useStore } from '@/src/store';
 import { cn } from '@/src/lib/utils';
-import { Lock, FileText, ClipboardList, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Lock, FileText, ClipboardList, AlertTriangle, ArrowRight, ArrowLeft, CheckCircle2, Phone } from 'lucide-react';
 
 export function Diagnostic() {
   const { type } = useParams<{ type: string }>();
   const navigate = useNavigate();
   const addResult = useStore(state => state.addResult);
 
-  // Tabs state: 'inicio' | 'questionario' | 'resultado' | 'plano'
+  // Active view tab: 'inicio' | 'questionario'
   const [activeTab, setActiveTab] = useState<'inicio' | 'questionario'>('inicio');
+
+  // Sub-steps inside 'questionario' tab: 
+  // 0: Marca, 1: Fin, 2: Ope, 3: Gestao, 4: Mercado, 5: Finalizar
+  const [currentStep, setCurrentStep] = useState(0);
 
   // Form data for Tab 1 (Seus Dados)
   const [clientName, setClientName] = useState('');
@@ -22,9 +26,15 @@ export function Diagnostic() {
   const [phone, setPhone] = useState('');
   const [city, setCity] = useState('');
   const [segment, setSegment] = useState('');
-  const [operationTime, setOperationTime] = useState('');
+  
+  // Custom structured inputs for Operation Time and Revenue
+  const [operationTimeValue, setOperationTimeValue] = useState('');
+  const [operationTimeUnit, setOperationTimeUnit] = useState<'Anos' | 'Meses'>('Anos');
+  
+  const [revenueValue, setRevenueValue] = useState('');
+  const [revenueUnit, setRevenueUnit] = useState<'Mil' | 'Milhões'>('Mil');
+  
   const [ownUnits, setOwnUnits] = useState('1');
-  const [revenue, setRevenue] = useState('');
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
 
   // Answers state: questionId -> optionScore
@@ -36,24 +46,38 @@ export function Diagnostic() {
     }
   }, [type, navigate]);
 
-  // Questions and categories configuration
+  // Questions database
   const questions = diagnosticoFranqueabilidade;
 
-  // Validation for Tab 1
+  // Group questions by dimension steps
+  const stepsConfig = [
+    { id: 'marca', name: 'Marca e Blindagem Jurídica', index: 0 },
+    { id: 'fin', name: 'Saúde Econômico-Financeira', index: 1 },
+    { id: 'ope', name: 'Operação e Replicabilidade', index: 2 },
+    { id: 'gestao', name: 'Gestão, Estrutura e Pessoas', index: 3 },
+    { id: 'mercado', name: 'Mercado e Posicionamento', index: 4 }
+  ];
+
+  // Validation rules
+  const cleanPhone = phone.replace(/\D/g, '');
+  const isPhoneValid = cleanPhone.length >= 10 && cleanPhone.length <= 11;
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
   const isFormValid = () => {
     return (
       clientName.trim() !== '' &&
       companyName.trim() !== '' &&
-      email.trim() !== '' &&
-      phone.trim() !== '' &&
+      isEmailValid &&
+      isPhoneValid &&
       city.trim() !== '' &&
       segment.trim() !== '' &&
-      operationTime.trim() !== '' &&
-      revenue.trim() !== ''
+      operationTimeValue.trim() !== '' &&
+      revenueValue.trim() !== '' &&
+      parseInt(ownUnits) > 0
     );
   };
 
-  // Category index calculation helper (matching spreadsheet logic)
+  // Compile calculated scores (spreadsheet logic)
   const calculateResult = (currentAnswers: Record<string, number>) => {
     const categories = [
       { id: 'marca', weight: 0.20, count: 5 },
@@ -69,7 +93,7 @@ export function Diagnostic() {
 
     categories.forEach(c => {
       categoryScores[c.id] = 0;
-      categoryMaxScores[c.id] = c.count * 10; // Max score per question is 10
+      categoryMaxScores[c.id] = c.count * 10;
     });
 
     questions.forEach(q => {
@@ -87,7 +111,7 @@ export function Diagnostic() {
     });
 
     return {
-      score: Math.round(totalWeightedScore * 10) / 10, // Round to 1 decimal place (e.g. 55.2)
+      score: Math.round(totalWeightedScore * 10) / 10,
       categoryScores,
       categoryMaxScores
     };
@@ -101,7 +125,6 @@ export function Diagnostic() {
   };
 
   const totalAnswered = Object.keys(answers).filter(k => answers[k] !== undefined).length;
-  const rawScoreSum = Object.values(answers).reduce((a, b) => a + b, 0);
 
   const handleFinish = () => {
     if (totalAnswered < questions.length) return;
@@ -109,19 +132,23 @@ export function Diagnostic() {
     const { score, categoryScores, categoryMaxScores } = calculateResult(answers);
     const resultId = Math.random().toString(36).substring(7);
 
+    // Formatted operation time and revenue for consistency
+    const finalOperationTime = `${operationTimeValue} ${operationTimeUnit === 'Anos' ? 'ano(s)' : 'mês(es)'}`;
+    const finalRevenue = `R$ ${revenueValue} ${revenueUnit.toLowerCase()}`;
+
     const newResult = {
       id: resultId,
       type: 'franqueabilidade' as const,
       clientName,
       companyName,
       email,
-      phone,
+      phone: cleanPhone,
       city,
       segment,
-      operationTime,
+      operationTime: finalOperationTime,
       ownUnits: parseInt(ownUnits) || 1,
-      revenue,
-      date,
+      revenue: finalRevenue,
+      date, // Saves clean YYYY-MM-DD
       score,
       categoryScores,
       categoryMaxScores,
@@ -132,20 +159,23 @@ export function Diagnostic() {
     navigate(`/resultado/${resultId}`);
   };
 
-  // Helper for pill color in table
-  const getSituationStyle = (score: number | undefined) => {
-    if (score === undefined) return { label: 'Pendente', bg: 'bg-gray-100 text-gray-500 border-gray-200' };
-    if (score <= 3) return { label: 'BLOQUEIO CRÍTICO', bg: 'bg-red-50 text-red-600 border-red-200 font-bold' };
-    if (score <= 6) return { label: 'Prioridade média', bg: 'bg-yellow-50 text-yellow-600 border-yellow-200 font-medium' };
-    return { label: 'Consolidado', bg: 'bg-green-50 text-green-600 border-green-200 font-medium' };
-  };
+  const currentStepConfig = stepsConfig[currentStep];
+  const currentCategoryQuestions = currentStep < 5 
+    ? questions.filter(q => q.categoryId === currentStepConfig.id)
+    : [];
+
+  const allAnsweredInCurrentStep = currentStep < 5
+    ? currentCategoryQuestions.every(q => answers[q.id] !== undefined)
+    : true;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Tabs Menu */}
       <div className="flex border-b border-gray-200 bg-white rounded-t-2xl shadow-sm overflow-x-auto scrollbar-none shrink-0">
         <button
-          onClick={() => setActiveTab('inicio')}
+          onClick={() => {
+            setActiveTab('inicio');
+          }}
           className={cn(
             "flex items-center gap-2 px-6 py-4 text-sm font-bold border-b-2 transition-all cursor-pointer",
             activeTab === 'inicio'
@@ -208,7 +238,7 @@ export function Diagnostic() {
                     type="text"
                     value={clientName}
                     onChange={(e) => setClientName(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#1F4761] focus:border-transparent outline-none transition-all text-sm"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#1F4761] focus:border-transparent outline-none transition-all text-sm text-[#1A2840]"
                     placeholder="Seu nome"
                   />
                 </div>
@@ -219,7 +249,7 @@ export function Diagnostic() {
                     type="text"
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#1F4761] focus:border-transparent outline-none transition-all text-sm"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#1F4761] focus:border-transparent outline-none transition-all text-sm text-[#1A2840]"
                     placeholder="Nome do seu negócio"
                   />
                 </div>
@@ -230,9 +260,15 @@ export function Diagnostic() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#1F4761] focus:border-transparent outline-none transition-all text-sm"
+                    className={cn(
+                      "w-full px-4 py-2.5 rounded-xl border focus:ring-2 focus:ring-[#1F4761] focus:border-transparent outline-none transition-all text-sm text-[#1A2840]",
+                      email.trim() !== '' && !isEmailValid ? 'border-red-400 bg-red-50/35' : 'border-gray-300'
+                    )}
                     placeholder="seuemail@exemplo.com"
                   />
+                  {email.trim() !== '' && !isEmailValid && (
+                    <span className="text-[10px] text-red-500 font-bold">Por favor, insira um e-mail válido</span>
+                  )}
                 </div>
 
                 <div className="space-y-1">
@@ -241,9 +277,15 @@ export function Diagnostic() {
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#1F4761] focus:border-transparent outline-none transition-all text-sm"
-                    placeholder="44 99999-9999"
+                    className={cn(
+                      "w-full px-4 py-2.5 rounded-xl border focus:ring-2 focus:ring-[#1F4761] focus:border-transparent outline-none transition-all text-sm text-[#1A2840]",
+                      phone.trim() !== '' && !isPhoneValid ? 'border-red-400 bg-red-50/35' : 'border-gray-300'
+                    )}
+                    placeholder="Ex: 44 99966-5711"
                   />
+                  {phone.trim() !== '' && !isPhoneValid && (
+                    <span className="text-[10px] text-red-500 font-bold">Insira um número de telefone com DDD (10 ou 11 dígitos numéricos)</span>
+                  )}
                 </div>
 
                 <div className="space-y-1">
@@ -252,7 +294,7 @@ export function Diagnostic() {
                     type="text"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#1F4761] focus:border-transparent outline-none transition-all text-sm"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#1F4761] focus:border-transparent outline-none transition-all text-sm text-[#1A2840]"
                     placeholder="Ex: Maringá / PR"
                   />
                 </div>
@@ -263,20 +305,54 @@ export function Diagnostic() {
                     type="text"
                     value={segment}
                     onChange={(e) => setSegment(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#1F4761] focus:border-transparent outline-none transition-all text-sm"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#1F4761] focus:border-transparent outline-none transition-all text-sm text-[#1A2840]"
                     placeholder="Ex: Alimentação, Estética, Varejo"
                   />
                 </div>
 
+                {/* Tempo de operação com seletor anos/meses */}
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-600 uppercase">Tempo de operação</label>
-                  <input
-                    type="text"
-                    value={operationTime}
-                    onChange={(e) => setOperationTime(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#1F4761] focus:border-transparent outline-none transition-all text-sm"
-                    placeholder="Ex: 2 anos"
-                  />
+                  <label className="text-xs font-bold text-gray-600 uppercase block">Tempo de operação</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="Ex: 3"
+                      value={operationTimeValue}
+                      onChange={(e) => setOperationTimeValue(e.target.value)}
+                      className="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#1F4761] focus:border-transparent outline-none transition-all text-sm text-[#1A2840]"
+                    />
+                    <select
+                      value={operationTimeUnit}
+                      onChange={(e) => setOperationTimeUnit(e.target.value as 'Anos' | 'Meses')}
+                      className="px-3 py-2.5 rounded-xl border border-gray-300 text-[#1A2840] bg-white font-semibold text-sm outline-none cursor-pointer focus:ring-1 focus:ring-[#1F4761]"
+                    >
+                      <option value="Anos" className="text-[#1A2840]">Ano(s)</option>
+                      <option value="Meses" className="text-[#1A2840]">Mês(es)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Faturamento médio com seletor Mil/Milhões */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-600 uppercase block">Faturamento médio mensal por unidade</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Ex: 50 ou 1.5"
+                      value={revenueValue}
+                      onChange={(e) => setRevenueValue(e.target.value)}
+                      className="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#1F4761] focus:border-transparent outline-none transition-all text-sm text-[#1A2840]"
+                    />
+                    <select
+                      value={revenueUnit}
+                      onChange={(e) => setRevenueUnit(e.target.value as 'Mil' | 'Milhões')}
+                      className="px-3 py-2.5 rounded-xl border border-gray-300 text-[#1A2840] bg-white font-semibold text-sm outline-none cursor-pointer focus:ring-1 focus:ring-[#1F4761]"
+                    >
+                      <option value="Mil" className="text-[#1A2840]">Mil</option>
+                      <option value="Milhões" className="text-[#1A2840]">Milhões</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -287,29 +363,18 @@ export function Diagnostic() {
                       min="1"
                       value={ownUnits}
                       onChange={(e) => setOwnUnits(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#1F4761] focus:border-transparent outline-none transition-all text-sm"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#1F4761] focus:border-transparent outline-none transition-all text-sm text-[#1A2840]"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-600 uppercase">Faturamento médio / un.</label>
+                    <label className="text-xs font-bold text-gray-600 uppercase">Data do preenchimento</label>
                     <input
-                      type="text"
-                      value={revenue}
-                      onChange={(e) => setRevenue(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#1F4761] focus:border-transparent outline-none transition-all text-sm"
-                      placeholder="Ex: R$ 50 mil"
+                      type="date"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#1F4761] focus:border-transparent outline-none transition-all text-sm text-[#1A2840]"
                     />
                   </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-600 uppercase">Data do preenchimento</label>
-                  <input
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#1F4761] focus:border-transparent outline-none transition-all text-sm"
-                  />
                 </div>
               </div>
             </div>
@@ -318,8 +383,8 @@ export function Diagnostic() {
             <div className="space-y-4 bg-gray-50 p-6 rounded-2xl border border-gray-100">
               <h3 className="text-md font-bold text-[#1A2840] uppercase tracking-wide">Como Funciona</h3>
               <ol className="list-decimal pl-5 space-y-2 text-sm text-gray-600">
-                <li>Vá até a aba «Questionário» e responda às 25 perguntas escolhendo uma opção na lista suspensa de cada linha. Não existe resposta certa ou errada — responda com sinceridade, porque o resultado só é útil se refletir a realidade.</li>
-                <li>A pontuação é calculada automaticamente. Cada pergunta vale de 0 a 10 pontos e cada dimensão tem um peso diferente, porque nem todos os fatores pesam igual na decisão de franquear.</li>
+                <li>Vá até a aba «Questionário» e responda às 25 perguntas divididas em 5 etapas baseadas em cada dimensão. Escolha uma opção na lista suspensa de cada linha.</li>
+                <li>Não existe resposta certa ou errada — responda com sinceridade, porque o resultado só é útil se refletir a realidade. As pontuações e as classificações ficam ocultas durante o questionário para evitar viés.</li>
                 <li>Na aba «Resultado» você verá seu Índice de Franqueabilidade (0 a 100), sua classificação, o desempenho por dimensão e os gráficos comparativos.</li>
                 <li>Na aba «Plano de Ação» o sistema gera, para cada item, a recomendação correspondente à sua resposta — um roteiro do que precisa ser resolvido antes de franquear.</li>
               </ol>
@@ -347,126 +412,186 @@ export function Diagnostic() {
                 onClick={() => setActiveTab('questionario')}
                 className="gap-2"
               >
-                Ir para o Questionário
+                Ir para o Questionário <ArrowRight className="w-4 h-4" />
               </Button>
             </div>
           </div>
         ) : (
+          /* Tab Questionário split in steps */
           <div className="space-y-6">
-            <div className="flex justify-between items-center border-b border-gray-100 pb-4 shrink-0">
-              <div>
-                <h2 className="text-xl font-bold text-[#1A2840]">QUESTIONÁRIO DE FRANQUEABILIDADE</h2>
-                <p className="text-xs text-gray-400 mt-1">Escolha uma opção na coluna "Sua resposta" para cada um dos 25 itens.</p>
-              </div>
-              <div className="text-right">
-                <span className="text-xs font-bold bg-[#1F4761]/10 text-[#1F4761] px-3 py-1.5 rounded-full">
-                  {totalAnswered} de {questions.length} respondidas
-                </span>
-              </div>
-            </div>
+            {currentStep < 5 ? (
+              /* Steps 0 to 4 (Dimensions evaluation) */
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 pb-4 gap-2 shrink-0">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#1F4761] bg-[#1F4761]/10 px-2.5 py-1 rounded-md">
+                      Etapa {currentStep + 1} de 5 • {currentStepConfig.name}
+                    </span>
+                    <h2 className="text-xl font-bold text-[#1A2840] mt-2">Questões de Franqueabilidade</h2>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-bold text-gray-400">
+                      Progresso Geral: {totalAnswered} de {questions.length} respondidas
+                    </span>
+                  </div>
+                </div>
 
-            {/* Table layout */}
-            <div className="overflow-x-auto rounded-2xl border border-gray-100 shadow-sm bg-white">
-              <table className="w-full text-left border-collapse min-w-[900px] text-sm">
-                <thead>
-                  <tr className="bg-gray-50 text-gray-500 border-b border-gray-100 font-bold">
-                    <th className="py-4 px-4 w-12 text-center">Nº</th>
-                    <th className="py-4 px-4 w-48">Dimensão</th>
-                    <th className="py-4 px-4 w-64">Item avaliado</th>
-                    <th className="py-4 px-4">Sua resposta</th>
-                    <th className="py-4 px-4 w-20 text-center">Pontos</th>
-                    <th className="py-4 px-4 w-44">Situação</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {questions.map((q, idx) => {
-                    const selectedScore = answers[q.id];
-                    const selectedOptIndex = q.options.findIndex(opt => opt.score === selectedScore);
-                    const selectedVal = selectedOptIndex !== -1 ? selectedOptIndex.toString() : "";
-                    const situation = getSituationStyle(selectedScore);
-
-                    return (
-                      <tr key={q.id} className="hover:bg-gray-50/50 transition-colors">
-                        <td className="py-3.5 px-4 font-semibold text-gray-400 text-center">{idx + 1}</td>
-                        <td className="py-3.5 px-4 font-semibold text-gray-700 text-xs">
-                          <span className={cn(
-                            "px-2.5 py-1 rounded-md uppercase tracking-wider text-[10px]",
-                            q.categoryId === 'marca' ? 'bg-blue-50 text-blue-700' :
-                            q.categoryId === 'fin' ? 'bg-emerald-50 text-emerald-700' :
-                            q.categoryId === 'ope' ? 'bg-purple-50 text-purple-700' :
-                            q.categoryId === 'gestao' ? 'bg-amber-50 text-amber-700' :
-                            'bg-pink-50 text-pink-700'
-                          )}>
-                            {q.categoryName}
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-4 font-medium text-[#1A2840]">{q.text}</td>
-                        <td className="py-3.5 px-4">
-                          <select
-                            value={selectedVal}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (val === "") {
-                                handleSelectAnswer(q.id, undefined as any);
-                              } else {
-                                const option = q.options[parseInt(val)];
-                                handleSelectAnswer(q.id, option.score);
-                              }
-                            }}
-                            className={cn(
-                              "w-full px-3 py-2 rounded-lg border text-sm focus:ring-1 focus:ring-[#1F4761] outline-none bg-white",
-                              selectedVal === "" ? "border-gray-300 text-gray-400" : "border-[#1F4761]/40 text-[#1A2840]"
-                            )}
-                          >
-                            <option value="">Selecione uma resposta...</option>
-                            {q.options.map((opt, oIdx) => (
-                              <option key={oIdx} value={oIdx}>
-                                {opt.text} ({opt.score} pts)
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                        <td className="py-3.5 px-4 font-bold text-center text-[#1A2840]">
-                          {selectedScore !== undefined ? selectedScore : '-'}
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <span className={cn(
-                            "inline-block px-2.5 py-1 rounded-full text-xs border text-center min-w-[120px]",
-                            situation.bg
-                          )}>
-                            {situation.label}
-                          </span>
-                        </td>
+                {/* Table structure for current category questions */}
+                <div className="overflow-x-auto rounded-2xl border border-gray-100 shadow-sm bg-white">
+                  <table className="w-full text-left border-collapse min-w-[800px] text-sm">
+                    <thead>
+                      <tr className="bg-gray-50 text-gray-500 border-b border-gray-100 font-bold text-xs">
+                        <th className="py-4 px-4 w-12 text-center">Nº</th>
+                        <th className="py-4 px-4 w-60 text-left">Dimensão</th>
+                        <th className="py-4 px-4 w-72 text-left">Item avaliado</th>
+                        <th className="py-4 px-4">Sua resposta</th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {currentCategoryQuestions.map((q) => {
+                        // Find overall index
+                        const overallIdx = questions.findIndex(item => item.id === q.id);
+                        const selectedScore = answers[q.id];
+                        const selectedOptIndex = q.options.findIndex(opt => opt.score === selectedScore);
+                        const selectedVal = selectedOptIndex !== -1 ? selectedOptIndex.toString() : "";
 
-            {/* Footer Summary */}
-            <div className="flex flex-col sm:flex-row items-center justify-between bg-[#1A2840] text-white p-5 rounded-2xl mt-6 gap-4">
-              <div className="flex flex-wrap gap-x-8 gap-y-2 text-center sm:text-left justify-center sm:justify-start">
-                <div>
-                  <span className="text-xs opacity-60 block">PONTUAÇÃO BRUTA</span>
-                  <span className="text-xl font-bold text-[#F3C611]">{rawScoreSum} <span className="text-xs font-normal opacity-75">/ 250 pontos</span></span>
+                        return (
+                          <tr key={q.id} className="hover:bg-gray-50/50 transition-colors">
+                            <td className="py-4 px-4 font-semibold text-gray-400 text-center">{overallIdx + 1}</td>
+                            <td className="py-4 px-4 font-bold text-left text-gray-700">
+                              <span className={cn(
+                                "px-2.5 py-1 rounded-md uppercase tracking-wider text-[10px] inline-block text-left",
+                                q.categoryId === 'marca' ? 'bg-blue-50 text-blue-700' :
+                                q.categoryId === 'fin' ? 'bg-emerald-50 text-emerald-700' :
+                                q.categoryId === 'ope' ? 'bg-purple-50 text-purple-700' :
+                                q.categoryId === 'gestao' ? 'bg-amber-50 text-amber-700' :
+                                'bg-pink-50 text-pink-700'
+                              )}>
+                                {q.categoryName}
+                              </span>
+                            </td>
+                            <td className="py-4 px-4 font-semibold text-[#1A2840] leading-snug">{q.text}</td>
+                            <td className="py-4 px-4">
+                              <select
+                                value={selectedVal}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (val === "") {
+                                    handleSelectAnswer(q.id, undefined as any);
+                                  } else {
+                                    const option = q.options[parseInt(val)];
+                                    handleSelectAnswer(q.id, option.score);
+                                  }
+                                }}
+                                className={cn(
+                                  "w-full px-3 py-2 rounded-lg border text-sm font-semibold focus:ring-1 focus:ring-[#1F4761] outline-none bg-white",
+                                  selectedVal === "" ? "border-gray-200 text-gray-400" : "border-[#1F4761]/40 text-[#1A2840]"
+                                )}
+                              >
+                                <option value="" className="text-gray-400 bg-white">Selecione uma resposta...</option>
+                                {q.options.map((opt, oIdx) => (
+                                  <option key={oIdx} value={oIdx} className="text-[#1A2840] bg-white font-medium">
+                                    {opt.text}
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
-                <div className="border-l border-white/10 pl-6 hidden sm:block">
-                  <span className="text-xs opacity-60 block">RESPOSTAS</span>
-                  <span className="text-xl font-bold">{totalAnswered} <span className="text-xs font-normal opacity-75">de {questions.length} respondidas</span></span>
+
+                {/* Progress bar in bottom */}
+                <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden mt-4">
+                  <div 
+                    className="bg-[#1F4761] h-full transition-all duration-300"
+                    style={{ width: `${(totalAnswered / questions.length) * 100}%` }}
+                  />
+                </div>
+
+                {/* Navigation inside steps */}
+                <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (currentStep > 0) {
+                        setCurrentStep(currentStep - 1);
+                      } else {
+                        setActiveTab('inicio');
+                      }
+                    }}
+                    className="gap-2"
+                  >
+                    <ArrowLeft className="w-4 h-4" /> Voltar
+                  </Button>
+
+                  <Button
+                    disabled={!allAnsweredInCurrentStep}
+                    onClick={() => {
+                      setCurrentStep(currentStep + 1);
+                    }}
+                    className="gap-2"
+                  >
+                    Próxima Etapa <ArrowRight className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
-              <div>
-                <Button
-                  variant="secondary"
-                  disabled={totalAnswered < questions.length}
-                  onClick={handleFinish}
-                  className="w-full sm:w-auto"
-                >
-                  Finalizar Diagnóstico
-                </Button>
+            ) : (
+              /* Step 5: Finalizar Diagnóstico Screen */
+              <div className="max-w-2xl mx-auto py-10 text-center space-y-8">
+                <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto border border-green-200">
+                  <CheckCircle2 className="w-10 h-10 text-green-600" />
+                </div>
+                <div className="space-y-3">
+                  <span className="text-xs font-bold text-green-600 uppercase tracking-widest">Questionário Concluído</span>
+                  <h2 className="text-3xl font-black text-[#1A2840]">TUDO PRONTO!</h2>
+                  <p className="text-gray-500 text-sm md:text-base leading-relaxed">
+                    Você respondeu com sucesso às 25 perguntas do Pré-Diagnóstico de Franqueabilidade. As notas foram computadas automaticamente e seu parecer estratégico já está pronto para visualização.
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 text-left space-y-3 text-sm text-gray-600 leading-normal">
+                  <h4 className="font-bold text-[#1A2840] uppercase text-xs tracking-wider">Resumo do Envio</h4>
+                  <p><strong>Nome Completo:</strong> {clientName}</p>
+                  <p><strong>Empresa / Marca:</strong> {companyName}</p>
+                  <p><strong>Cidade / Estado:</strong> {city}</p>
+                  <p><strong>Total de Questões Respondidas:</strong> 25 de 25</p>
+                </div>
+
+                {/* Finalize button */}
+                <div className="pt-4 flex flex-col sm:flex-row justify-center gap-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentStep(4)}
+                    className="gap-2"
+                  >
+                    <ArrowLeft className="w-4 h-4" /> Revisar Respostas
+                  </Button>
+                  <Button
+                    onClick={handleFinish}
+                    className="gap-2"
+                    variant="secondary"
+                  >
+                    Gerar Meu Pré-Diagnóstico & Plano de Ação <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
+
+                {/* Extra CTA final support */}
+                <div className="pt-8 border-t border-gray-100 flex flex-col items-center space-y-3">
+                  <p className="text-xs text-gray-400">Tem alguma dúvida ou gostaria de assistência?</p>
+                  <a
+                    href="https://wa.me/5544999665711?text=Olá! Estou no site realizando o formulário de Pré-Diagnóstico e gostaria de tirar uma dúvida."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-xs font-bold text-[#25D366] hover:underline"
+                  >
+                    <Phone className="w-4 h-4 fill-[#25D366] stroke-none" /> Chamar Suporte R.Guirado no WhatsApp
+                  </a>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
       </div>
