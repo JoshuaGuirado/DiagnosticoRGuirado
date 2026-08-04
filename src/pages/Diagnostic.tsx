@@ -63,7 +63,9 @@ export function Diagnostic() {
   const cleanPhone = phone.replace(/\D/g, '');
   const isPhoneValid = cleanPhone.length >= 10 && cleanPhone.length <= 11;
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const emailExists = results.some(r => r.email?.trim().toLowerCase() === email.trim().toLowerCase());
+  const whitelist = ['joshuafguirado@gmail.com', 'consultoriaricardo@gmail.com'];
+  const isWhitelisted = whitelist.includes(email.trim().toLowerCase());
+  const emailExists = !isWhitelisted && results.some(r => r.email?.trim().toLowerCase() === email.trim().toLowerCase());
 
   const isFormValid = () => {
     return (
