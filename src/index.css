@@ -1,0 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+
+  --color-rg-dark: #1A2840;
+  --color-rg-medium: #1F4761;
+  --color-rg-yellow: #F3C611;
+  --color-rg-beige: #F8F0E3;
+}
+
+@utility shadow-soft {
+  box-shadow: 0 10px 30px -5px rgba(26, 40, 64, 0.08);
+}
+
+@utility card-gradient {
+  background: linear-gradient(135deg, #1A2840 0%, #1F4761 100%);
+}
+
+body {
+  background-color: var(--color-rg-beige);
+  color: var(--color-rg-dark);
+}
