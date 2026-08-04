@@ -11,6 +11,7 @@ export function Diagnostic() {
   const { type } = useParams<{ type: string }>();
   const navigate = useNavigate();
   const addResult = useStore(state => state.addResult);
+  const results = useStore(state => state.results);
 
   // Active view tab: 'inicio' | 'questionario'
   const [activeTab, setActiveTab] = useState<'inicio' | 'questionario'>('inicio');
@@ -62,12 +63,14 @@ export function Diagnostic() {
   const cleanPhone = phone.replace(/\D/g, '');
   const isPhoneValid = cleanPhone.length >= 10 && cleanPhone.length <= 11;
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const emailExists = results.some(r => r.email?.trim().toLowerCase() === email.trim().toLowerCase());
 
   const isFormValid = () => {
     return (
       clientName.trim() !== '' &&
       companyName.trim() !== '' &&
       isEmailValid &&
+      !emailExists &&
       isPhoneValid &&
       city.trim() !== '' &&
       segment.trim() !== '' &&
@@ -262,12 +265,15 @@ export function Diagnostic() {
                     onChange={(e) => setEmail(e.target.value)}
                     className={cn(
                       "w-full px-4 py-2.5 rounded-xl border focus:ring-2 focus:ring-[#1F4761] focus:border-transparent outline-none transition-all text-sm text-[#1A2840]",
-                      email.trim() !== '' && !isEmailValid ? 'border-red-400 bg-red-50/35' : 'border-gray-300'
+                      (email.trim() !== '' && !isEmailValid) || emailExists ? 'border-red-400 bg-red-50/35' : 'border-gray-300'
                     )}
                     placeholder="seuemail@exemplo.com"
                   />
                   {email.trim() !== '' && !isEmailValid && (
                     <span className="text-[10px] text-red-500 font-bold">Por favor, insira um e-mail válido</span>
+                  )}
+                  {email.trim() !== '' && isEmailValid && emailExists && (
+                    <span className="text-[10px] text-red-500 font-bold block">Este e-mail já realizou o pré-diagnóstico. Apenas um teste é permitido por e-mail.</span>
                   )}
                 </div>
 

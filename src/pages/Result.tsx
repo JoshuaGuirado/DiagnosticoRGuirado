@@ -609,6 +609,15 @@ export function Result() {
         )}
       </div>
 
+      {/* Action button to finalize and return home */}
+      <div className="flex justify-center pt-6 pb-2 shrink-0">
+        <Link to="/">
+          <Button size="lg" className="bg-[#1F4761] hover:bg-[#1A2840] text-white font-extrabold px-8 py-4 rounded-xl shadow-md transition-all gap-2 text-sm cursor-pointer">
+            <CheckCircle2 className="w-4 h-4" /> Finalizar Teste
+          </Button>
+        </Link>
+      </div>
+
       {/* Hidden container for rendering the consolidated PDF document */}
       <div 
         ref={reportRef} 
