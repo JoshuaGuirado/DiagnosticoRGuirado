@@ -655,39 +655,54 @@ export function Result() {
             </div>
           </div>
 
-          {/* Performance Table */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide">Desempenho por Dimensão</h3>
-            <div className="border rounded-xl overflow-hidden shadow-sm">
-              <table className="w-full text-left border-collapse text-[11px]">
-                <thead>
-                  <tr className="bg-gray-50 text-gray-500 font-bold border-b">
-                    <th className="py-2.5 px-2 text-left">Dimensão</th>
-                    <th className="py-2.5 px-3 text-center">Pontos obtidos</th>
-                    <th className="py-2.5 px-3 text-center">Aproveitamento (%)</th>
-                    <th className="py-2.5 px-3 text-center">Peso (%)</th>
-                    <th className="py-2.5 px-3 text-center">Contribuição (%)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y font-medium text-gray-700">
-                  {dimensionRows.map((row, i) => (
-                    <tr key={i}>
-                      <td className="py-2.5 px-2 text-left font-bold text-gray-800">{row.name}</td>
-                      <td className="py-2.5 px-3 text-center">{row.obtained} / {row.max}</td>
-                      <td className="py-2.5 px-3 text-center">{row.aproveitamento}%</td>
-                      <td className="py-2.5 px-3 text-center text-gray-400">{row.weight}%</td>
-                      <td className="py-2.5 px-3 text-center text-[#1F4761] font-bold">{row.contribution}%</td>
+          {/* Performance Table & Radar Chart Grid */}
+          <div className="grid grid-cols-2 gap-8 items-center">
+            <div className="space-y-3">
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide">Desempenho por Dimensão</h3>
+              <div className="border rounded-xl overflow-hidden shadow-sm">
+                <table className="w-full text-left border-collapse text-[11px]">
+                  <thead>
+                    <tr className="bg-gray-50 text-gray-500 font-bold border-b">
+                      <th className="py-2.5 px-2 text-left">Dimensão</th>
+                      <th className="py-2.5 px-3 text-center">Pontos obtidos</th>
+                      <th className="py-2.5 px-3 text-center">Aproveitamento (%)</th>
+                      <th className="py-2.5 px-3 text-center">Peso (%)</th>
+                      <th className="py-2.5 px-3 text-center">Contribuição (%)</th>
                     </tr>
-                  ))}
-                  <tr className="bg-gray-50 font-bold text-gray-800 border-t-2">
-                    <td className="py-2.5 px-2 text-left font-extrabold text-[#1A2840]">TOTAL</td>
-                    <td className="py-2.5 px-3 text-center">{dimensionRows.reduce((a, b) => a + b.obtained, 0)} / 250</td>
-                    <td className="py-2.5 px-3 text-center">{Math.round((dimensionRows.reduce((a, b) => a + b.obtained, 0) / 250) * 1000) / 10}%</td>
-                    <td className="py-2.5 px-3 text-center text-gray-400">100%</td>
-                    <td className="py-2.5 px-3 text-center text-[#1A2840] font-extrabold text-sm">{overallScore}%</td>
-                  </tr>
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y font-medium text-gray-700">
+                    {dimensionRows.map((row, i) => (
+                      <tr key={i}>
+                        <td className="py-2.5 px-2 text-left font-bold text-gray-800">{row.name}</td>
+                        <td className="py-2.5 px-3 text-center">{row.obtained} / {row.max}</td>
+                        <td className="py-2.5 px-3 text-center">{row.aproveitamento}%</td>
+                        <td className="py-2.5 px-3 text-center text-gray-400">{row.weight}%</td>
+                        <td className="py-2.5 px-3 text-center text-[#1F4761] font-bold">{row.contribution}%</td>
+                      </tr>
+                    ))}
+                    <tr className="bg-gray-50 font-bold text-gray-800 border-t-2">
+                      <td className="py-2.5 px-2 text-left font-extrabold text-[#1A2840]">TOTAL</td>
+                      <td className="py-2.5 px-3 text-center">{dimensionRows.reduce((a, b) => a + b.obtained, 0)} / 250</td>
+                      <td className="py-2.5 px-3 text-center">{Math.round((dimensionRows.reduce((a, b) => a + b.obtained, 0) / 250) * 1000) / 10}%</td>
+                      <td className="py-2.5 px-3 text-center text-gray-400">100%</td>
+                      <td className="py-2.5 px-3 text-center text-[#1A2840] font-extrabold text-sm">{overallScore}%</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Radar chart in PDF */}
+            <div className="flex flex-col items-center justify-center bg-gray-50/50 border border-gray-100 rounded-xl p-4 h-[260px]">
+              <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Radar de Desempenho</h4>
+              <div style={{ width: '400px', height: '200px' }} className="flex items-center justify-center">
+                <RadarChart width={400} height={200} cx="50%" cy="50%" outerRadius="65%" data={chartData}>
+                  <PolarGrid stroke="#e2e8f0" />
+                  <PolarAngleAxis dataKey="subject" tick={{ fill: '#4b5563', fontSize: 9, fontWeight: 600 }} />
+                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                  <Radar name="Aproveitamento" dataKey="A" stroke="#1F4761" fill="#1F4761" fillOpacity={0.15} />
+                </RadarChart>
+              </div>
             </div>
           </div>
 
