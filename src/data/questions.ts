@@ -1,6 +1,7 @@
 export type Option = {
   text: string;
   score: number;
+  recommendation?: string;
 };
 
 export type Question = {
@@ -308,303 +309,296 @@ export const diagnosticoEmpresarial: Question[] = [
 ];
 
 export const diagnosticoFranqueabilidade: Question[] = [
-  // Modelo de Negócio (2)
+  // 1. Marca e Blindagem Jurídica (5 itens)
   { 
-    id: "frq_mod_1", 
-    categoryId: "mod", 
-    categoryName: "Modelo de Negócio", 
-    text: "O modelo de negócio já se provou rentável e possui histórico de sucesso comprovado?",
+    id: "frq_marca_1", 
+    categoryId: "marca", 
+    categoryName: "Marca e Blindagem Jurídica", 
+    text: "Registro da marca no INPI",
     options: [
-      { text: "Ainda estamos testando o modelo, operando no prejuízo", score: 0 },
-      { text: "Abrimos recentemente, ainda não temos histórico longo", score: 1 },
-      { text: "Somos rentáveis em alguns meses, outros não", score: 2 },
-      { text: "Negócio rentável, com pelo menos 1 ano de sucesso comprovado", score: 3 },
-      { text: "Altamente rentável, histórico consolidado por vários anos", score: 4 },
-      { text: "Case de sucesso absurdo, com consistência incrível ao longo de anos", score: 5 },
+      { text: "Marca sem registro ou pesquisa prévia", score: 0, recommendation: "Bloqueio jurídico crítico. Franquear uma marca sem registro ou com impedimento expõe o franqueador e toda a rede ao risco de ter que mudar de nome. Realize uma busca de anterioridade imediatamente e faça o depósito." },
+      { text: "Pedido depositado, porém com oposição ou indeferido", score: 2, recommendation: "Bloqueio jurídico. Franquear uma marca sem registro concedido expõe o franqueador e toda a rede a riscos jurídicos de disputas com terceiros. Depósito no INPI e busca de anterioridade são o primeiro passo, antes de qualquer outra frente." },
+      { text: "Pedido em andamento, sem oposição", score: 6, recommendation: "Situação sob acompanhamento. O processo está tramitando normalmente, mas a concessão ainda não é definitiva. Monitore o andamento do pedido até a decisão final do INPI." },
+      { text: "Marca registrada e deferida pelo INPI", score: 10, recommendation: "Ativo de marca consolidado. Registro concedido pelo INPI, garantindo exclusividade nacional para a exploração da marca e segurança total para o franqueador e franqueados." }
     ]
   },
   { 
-    id: "frq_mod_2", 
-    categoryId: "mod", 
-    categoryName: "Modelo de Negócio", 
-    text: "O negócio tem capacidade de ser replicado em diferentes regiões mantendo a mesma essência?",
+    id: "frq_marca_2", 
+    categoryId: "marca", 
+    categoryName: "Marca e Blindagem Jurídica", 
+    text: "Regularidade jurídica, fiscal e trabalhista da empresa",
     options: [
-      { text: "Depende exclusivamente de uma habilidade técnica rara do dono", score: 0 },
-      { text: "Muito complexo para replicar, exige fornecedores super locais e específicos", score: 1 },
-      { text: "Pode ser replicado, mas perderia muita qualidade", score: 2 },
-      { text: "Replicável, mas com curva de aprendizado alta", score: 3 },
-      { text: "Modelo facilmente replicável em outras cidades", score: 4 },
-      { text: "Processos perfeitamente desenhados para replicação 'plug and play' em qualquer lugar", score: 5 },
-    ]
-  },
-
-  // Rentabilidade (2)
-  { 
-    id: "frq_ren_1", 
-    categoryId: "ren", 
-    categoryName: "Rentabilidade", 
-    text: "A margem de lucro líquido da operação permite o pagamento de royalties e ainda sobra uma boa rentabilidade?",
-    options: [
-      { text: "A margem é tão apertada que qualquer taxa mataria o lucro", score: 0 },
-      { text: "Sobram no máximo 5 a 8% no final", score: 1 },
-      { text: "Sobram cerca de 10 a 12% antes de royalties", score: 2 },
-      { text: "Margem saudável, suporta bem os royalties de mercado", score: 3 },
-      { text: "Margem de lucro excelente, muito atrativa mesmo com taxas", score: 4 },
-      { text: "Margem de lucro líquida estelar, garantindo prosperidade rápida para o franqueado", score: 5 },
+      { text: "Passivos fiscais ou trabalhistas graves que ameaçam a continuidade da empresa", score: 0, recommendation: "Bloqueio crítico. Pendências financeiras graves trazem riscos patrimoniais diretos para a rede. É urgente realizar uma auditoria legal e renegociar ou parcelar os débitos." },
+      { text: "Existem pendências pontuais em negociação", score: 4, recommendation: "Regularize as pendências abertas e faça um raio-x de contingências. O franqueador seguro resolve suas pendências antes de iniciar a expansão, pois o investidor qualificado pede certidões antes de assinar." },
+      { text: "Empresa em dia, com pouquíssimas pendências operacionais sob controle", score: 7, recommendation: "Nível satisfatório de regularidade. Continue acompanhando e garanta que não haja novas pendências trabalhistas ou fiscais que possam manchar a reputação da marca." },
+      { text: "Regularidade absoluta, com certidões negativas totalmente limpas (C&D)", score: 10, recommendation: "Excelente nível de conformidade jurídica. A regularidade total da empresa transmite segurança jurídica e credibilidade para potenciais franqueados e parceiros comerciais." }
     ]
   },
   { 
-    id: "frq_ren_2", 
-    categoryId: "ren", 
-    categoryName: "Rentabilidade", 
-    text: "O prazo de retorno do investimento (Payback) é atrativo para investidores em comparação ao mercado?",
+    id: "frq_marca_3", 
+    categoryId: "marca", 
+    categoryName: "Marca e Blindagem Jurídica", 
+    text: "Titularidade dos demais ativos (domínio, redes sociais, receitas, sistemas, layout)",
     options: [
-      { text: "Demora mais de 4-5 anos para retornar", score: 0 },
-      { text: "Retorno entre 36 e 48 meses", score: 1 },
-      { text: "Retorno entre 24 e 36 meses", score: 2 },
-      { text: "Retorno entre 18 e 24 meses (Padrão de mercado)", score: 3 },
-      { text: "Retorno rápido, entre 12 e 18 meses", score: 4 },
-      { text: "Payback recorde, menos de 12 meses", score: 5 },
-    ]
-  },
-
-  // Padronização (2)
-  { 
-    id: "frq_pad_1", 
-    categoryId: "pad", 
-    categoryName: "Padronização", 
-    text: "A arquitetura, o layout e a comunicação visual da empresa seguem um padrão rígido?",
-    options: [
-      { text: "Nenhum padrão, a loja/escritório foi montada de improviso", score: 0 },
-      { text: "Temos um logotipo, mas as cores e móveis não seguem um padrão", score: 1 },
-      { text: "Temos uma identidade visual básica aplicada", score: 2 },
-      { text: "Projeto arquitetônico existe, mas com adaptações soltas", score: 3 },
-      { text: "Projeto arquitetônico e visual merchandising bem definidos e padronizados", score: 4 },
-      { text: "Manual de arquitetura impecável, garantindo experiência idêntica em cada m²", score: 5 },
+      { text: "Ativos de propriedade pessoal dos sócios ou de terceiros, sem contratos", score: 2, recommendation: "Risco de segurança operacional. Transfira a titularidade de todos os domínios, redes sociais e marcas para o CNPJ da franqueadora para evitar bloqueios ou disputas futuras." },
+      { text: "Alguns ativos em nome da empresa, outros pertencem a pessoas físicas ou terceiros", score: 5, recommendation: "Formalização parcial. Mapeie todos os ativos intangíveis do negócio e elabore termos de cessão e contratos de transferência de propriedade para a pessoa jurídica." },
+      { text: "Todos em nome da empresa, com contratos e cessões formalizados", score: 10, recommendation: "Ativos consolidados na PJ, exatamente como um franqueador precisa estar para licenciar a marca e transferir tecnologia com segurança jurídica para a rede." }
     ]
   },
   { 
-    id: "frq_pad_2", 
-    categoryId: "pad", 
-    categoryName: "Padronização", 
-    text: "A experiência do cliente (jornada de compra) é padronizada e idêntica, independente de quem atende?",
+    id: "frq_marca_4", 
+    categoryId: "marca", 
+    categoryName: "Marca e Blindagem Jurídica", 
+    text: "Identidade visual e manual de marca",
     options: [
-      { text: "Cada atendente faz do seu jeito, dependemos de 'estrelas'", score: 0 },
-      { text: "O dono atende bem, os funcionários atendem mal", score: 1 },
-      { text: "Temos um guia rápido, mas a variação ainda é grande", score: 2 },
-      { text: "A equipe segue um padrão na maior parte do tempo", score: 3 },
-      { text: "Jornada mapeada, script seguido, atendimento consistente", score: 4 },
-      { text: "Experiência Disney: cada etapa é coreografada e idêntica independente de quem atenda", score: 5 },
+      { text: "Não possuímos identidade visual estruturada ou profissional", score: 0, recommendation: "Identidade visual fraca. A ausência de padrão estético impede a replicação visual. É essencial contratar uma agência para redesenhar a marca e criar um padrão profissional." },
+      { text: "Temos logomarca e cores, sem manual", score: 4, recommendation: "Você tem os elementos básicos de logo e cores, falta o manual de identidade que garante que a 10ª unidade seja idêntica à primeira — um dos entregáveis mais rápidos de resolver." },
+      { text: "Temos identidade visual e manual básico de marca formalizado", score: 7, recommendation: "Manual de marca ativo. Garanta que o manual seja amplamente divulgado entre designers e fornecedores parceiros para que toda peça publicitária siga o padrão corporativo." },
+      { text: "Manual completo de identidade visual detalhado e padronizado em todas as frentes", score: 10, recommendation: "Manual de identidade robusto. O padrão visual está perfeitamente protegido e documentado, facilitando a replicação da marca em qualquer ponto de venda." }
+    ]
+  },
+  { 
+    id: "frq_marca_5", 
+    categoryId: "marca", 
+    categoryName: "Marca e Blindagem Jurídica", 
+    text: "Preparo documental para franquear (COF e contrato — Lei 13.966/2019)",
+    options: [
+      { text: "Não temos conhecimento legal sobre a Lei de Franquias ou documentos necessários", score: 0, recommendation: "Bloqueio legal crítico. O desconhecimento da Lei de Franquias impede a expansão estruturada. É urgente buscar assessoria jurídica especializada para entender os deveres do franqueador." },
+      { text: "Conheço superficialmente, nada elaborado", score: 3, recommendation: "A Circular de Oferta de Franquia é obrigatória e deve ser entregue 10 dias antes da assinatura ou pagamento. Sem ela, o contrato é anulável e os valores devolvidos corrigidos. Contrate assessoria." },
+      { text: "Temos rascunhos de contratos, mas necessitam de revisão e alinhamento com a nova lei de franquias", score: 6, recommendation: "Necessidade de atualização. Revise os rascunhos dos contratos e a COF sob a ótica da Lei 13.966/2019, inserindo as regras de cotas, territórios e taxas específicas." },
+      { text: "Documentação completa (COF, pré-contrato e contrato) atualizada juridicamente", score: 10, recommendation: "Conformidade legal impecável. Os instrumentos de COF e Contrato estão totalmente de acordo com a legislação vigente, mitigando litígios e protegendo os direitos do franqueador." }
     ]
   },
 
-  // Marca (2)
-  { 
-    id: "frq_mar_1", 
-    categoryId: "mar", 
-    categoryName: "Marca", 
-    text: "A marca possui registro (ou pedido protocolado e sem oposição) no INPI?",
-    options: [
-      { text: "Nunca checamos isso", score: 0 },
-      { text: "Outra empresa usa o mesmo nome, não sabemos se dá problema", score: 1 },
-      { text: "Entramos com o pedido recentemente", score: 2 },
-      { text: "Pedido em andamento avançado, sem oposição", score: 3 },
-      { text: "Marca registrada e certificado concedido", score: 4 },
-      { text: "Marca registrada em múltiplas classes e totalmente blindada legalmente", score: 5 },
-    ]
-  },
-  { 
-    id: "frq_mar_2", 
-    categoryId: "mar", 
-    categoryName: "Marca", 
-    text: "A marca possui força comercial, engajamento e é reconhecida na sua região de atuação?",
-    options: [
-      { text: "Ninguém conhece a marca fora do nosso círculo", score: 0 },
-      { text: "Conhecida apenas na nossa rua/bairro", score: 1 },
-      { text: "Temos alguns clientes fieis, mas sem força em rede", score: 2 },
-      { text: "Boa reputação regional e nas redes sociais", score: 3 },
-      { text: "Marca forte, gera desejo e atrai clientes facilmente na região", score: 4 },
-      { text: "Marca altamente desejada, pessoas já pedem que abramos franquias na cidade delas", score: 5 },
-    ]
-  },
-
-  // Financeiro (2)
+  // 2. Saúde Econômico-Financeira (6 itens)
   { 
     id: "frq_fin_1", 
     categoryId: "fin", 
-    categoryName: "Financeiro", 
-    text: "A empresa possui capital de giro suficiente para investir na expansão e estrutura de suporte inicial?",
+    categoryName: "Saúde Econômico-Financeira", 
+    text: "Lucratividade líquida da operação",
     options: [
-      { text: "Estamos sem caixa nenhum", score: 0 },
-      { text: "Vivemos mês a mês, sem sobra para investir", score: 1 },
-      { text: "Poderíamos juntar um pouco de dinheiro para começar devagar", score: 2 },
-      { text: "Temos caixa para pagar a formatação da franquia", score: 3 },
-      { text: "Temos caixa para formatar e estruturar uma equipe básica de suporte", score: 4 },
-      { text: "Caixa robusto para investir pesadamente em expansão, marketing e equipe de ponta", score: 5 },
+      { text: "Margem de lucro líquido negativa (operando em prejuízo)", score: 0, recommendation: "Negócio inviável para franquias no momento. Franquear prejuízo é proibido na prática. Concentre todos os esforços em ajustar custos e receitas na operação própria primeiro." },
+      { text: "Lucro líquido abaixo de 8%", score: 3, recommendation: "Não se franquia uma empresa que ainda não provou que dá lucro. Antes de expandir, o caminho é reestruturar margem, custo e precificação na própria operação." },
+      { text: "Lucro líquido saudável entre 10% e 15%", score: 7, recommendation: "Margem operacional boa. Garanta a sustentabilidade desse resultado ao longo do ano para demonstrar aos potenciais franqueados uma operação estável e rentável." },
+      { text: "Lucro líquido excelente acima de 20%", score: 10, recommendation: "Lucratividade excelente. Essa alta performance financeira é o maior atrativo para novos investidores e facilita enormemente a venda das primeiras franquias." }
     ]
   },
   { 
     id: "frq_fin_2", 
     categoryId: "fin", 
-    categoryName: "Financeiro", 
-    text: "Os custos operacionais de uma unidade foram minuciosamente mapeados e simulados para novos franqueados?",
+    categoryName: "Saúde Econômico-Financeira", 
+    text: "Prazo de retorno do investimento (payback) da unidade",
     options: [
-      { text: "Não sabemos nossos próprios custos direito", score: 0 },
-      { text: "Temos uma ideia aproximada do custo de montagem", score: 1 },
-      { text: "Mapeamos os custos, mas falta precisão e variação por região", score: 2 },
-      { text: "Temos uma planilha razoável com custos de implantação e operação", score: 3 },
-      { text: "Custos bem mapeados em uma DRE simulada para o franqueado", score: 4 },
-      { text: "Estudo financeiro cirúrgico, prevendo diversos cenários e tributações", score: 5 },
+      { text: "Retorno do investimento estimado acima de 48 meses", score: 2, recommendation: "Retorno excessivamente longo. Esse prazo afasta investidores no mercado de franquias. É necessário otimizar o Capex (custo de montagem) para reduzir o payback da unidade." },
+      { text: "Entre 25 e 36 meses", score: 6, recommendation: "Payback aceitável, mas não é diferencial competitivo. Revisar investimento inicial e período da unidade piloto pode encurtar esse prazo de retorno." },
+      { text: "Retorno rápido estimado entre 18 e 24 meses", score: 9, recommendation: "Prazo de retorno muito competitivo. Esse intervalo é altamente atraente para investidores e se enquadra nas melhores práticas do mercado de franquias nacional." },
+      { text: "Retorno ultra rápido estimado em menos de 18 meses", score: 10, recommendation: "Payback recorde, menos de 18 meses. A recuperação rápida do capital investido gera alta liquidez e serve como excelente argumento comercial para a expansão em escala." }
+    ]
+  },
+  { 
+    id: "frq_fin_3", 
+    categoryId: "fin", 
+    categoryName: "Saúde Econômico-Financeira", 
+    text: "Capacidade do modelo de suportar royalties e fundo de propaganda",
+    options: [
+      { text: "Nunca simulei isso", score: 0, recommendation: "Este é o teste decisivo e o mais ignorado. Se a unidade não gera margem para pagar franqueador sem quebrar o franqueado, o modelo de negócio não é franqueável na configuração atual." },
+      { text: "A margem é muito apertada; a cobrança de royalties inviabilizaria o lucro do franqueado", score: 3, recommendation: "Gargalo financeiro crítico. O modelo precisa ser reformulado: reduza custos operacionais, renegocie com fornecedores ou reposicione os preços para abrir espaço para as taxas da franqueadora." },
+      { text: "O modelo comporta royalties moderados, mas exige alto volume de vendas para compensar", score: 6, recommendation: "Estudo financeiro necessário. Estruture royalties progressivos ou baseados em percentuais fixos sobre o faturamento, mas monitore de perto a saúde de caixa do franqueado nos meses mais fracos." },
+      { text: "O modelo comporta perfeitamente royalties e fundo de propaganda padrão, mantendo o franqueado altamente lucrativo", score: 10, recommendation: "Equilíbrio financeiro consolidado. A robustez da margem de lucro permite alimentar a franqueadora com royalties saudáveis sem sufocar a operação do franqueado." }
+    ]
+  },
+  { 
+    id: "frq_fin_4", 
+    categoryId: "fin", 
+    categoryName: "Saúde Econômico-Financeira", 
+    text: "Controle financeiro e indicadores de gestão",
+    options: [
+      { text: "Não temos controle financeiro estruturado; misturamos contas pessoais e da empresa", score: 0, recommendation: "Desorganização financeira crítica. Separe as contas imediatamente e adote um software financeiro. O franqueador precisa ser exemplo de compliance e rigor financeiro." },
+      { text: "DRE mensal, com alguns indicadores acompanhados", score: 7, recommendation: "Os controles existem, mas ainda não formam um painel de rede. Padronizar o plano de contas agora evita retrabalho quando houver várias unidades." },
+      { text: "Controles rígidos com DRE, fluxo de caixa diário e KPIs estratégicos acompanhados mensalmente", score: 10, recommendation: "Gestão financeira de alto nível. Com dados confiáveis em mãos, o franqueador consegue tomar decisões ágeis e apoiar o franqueado na otimização de custos e margens." }
+    ]
+  },
+  { 
+    id: "frq_fin_5", 
+    categoryId: "fin", 
+    categoryName: "Saúde Econômico-Financeira", 
+    text: "Investimento inicial estimado por unidade franqueada",
+    options: [
+      { text: "Investimento inicial estimado acima de R$ 500 mil", score: 3, recommendation: "Capex muito elevado. O ticket de entrada alto restringe o funil de candidatos a grandes investidores. Busque alternativas para baratear a implantação ou criar modelos compactos." },
+      { text: "Entre R$ 300 mil e R$ 500 mil", score: 6, recommendation: "O ticket de entrada exige um candidato de maior porte e ciclo de venda mais longo. Vale a pena estudar formatos alternativos (quiosque, contêiner, home based) para acelerar a expansão." },
+      { text: "Entre R$ 150 mil e R$ 300 mil", score: 10, recommendation: "Investimento inicial na média de mercado, muito equilibrado. Esse valor atrai investidores de classe média e permite a entrega de uma estrutura física robusta e de qualidade." }
+    ]
+  },
+  { 
+    id: "frq_fin_6", 
+    categoryId: "fin", 
+    categoryName: "Saúde Econômico-Financeira", 
+    text: "Fôlego de caixa do franqueador para estruturar a expansão",
+    options: [
+      { text: "Sem reservas financeiras; dependemos da venda imediata de franquias", score: 2, recommendation: "Subcapitalização perigosa. Expandir sem fôlego de caixa gera dependência de taxas de franquia, o que leva à venda para franqueados inadequados. Consiga capital ou estabilize o caixa próprio." },
+      { text: "Entre R$ 50 mil e R$ 120 mil", score: 8, recommendation: "Capital adequado para estruturar os primeiros ciclos de expansão e formatação sem depender da taxa de franquia. Mantenha os custos enxutos." },
+      { text: "Fôlego de caixa robusto, acima de R$ 120 mil dedicados à expansão", score: 10, recommendation: "Excelente liquidez. O capital próprio permite montar a franqueadora com qualidade, investindo em marketing de atração e consultoria de campo antes de vender as primeiras unidades." }
     ]
   },
 
-  // Processos (2) -> REPLACED MANUALS QUESTION AS REQUESTED
+  // 3. Operação e Replicabilidade (6 itens)
   { 
-    id: "frq_pro_1", 
-    categoryId: "pro", 
-    categoryName: "Processos", 
-    text: "Os processos estão mapeados, formalizados e funcionam na prática?",
+    id: "frq_ope_1", 
+    categoryId: "ope", 
+    categoryName: "Operação e Replicabilidade", 
+    text: "Unidade piloto",
     options: [
-      { text: "Tudo está na cabeça do dono", score: 0 },
-      { text: "Temos documentos que fizemos anos atrás e não usamos", score: 1 },
-      { text: "Apenas parte da operação está mapeada (ex: financeiro ou comercial)", score: 2 },
-      { text: "Processos existem e são razoavelmente seguidos no dia a dia", score: 3 },
-      { text: "Processos formais e vivos na empresa, base para treinamentos", score: 4 },
-      { text: "Cultura absoluta de processos: auditados, otimizados e à prova de falhas", score: 5 },
+      { text: "Não temos uma unidade operacional em funcionamento", score: 0, recommendation: "Inexistência de piloto. É impossível franquear uma ideia sem testá-la na prática. Monte e opere a unidade piloto por pelo menos 12 meses antes de pensar em expansão." },
+      { text: "Tenho a matriz idêntica ao modelo a ser franqueado", score: 6, recommendation: "O modelo piloto existe, mas ainda não foi validado fora da área do dono. Rodar o piloto no formato final de forma delegada evita corrigir o erro em dez unidades ao mesmo tempo." },
+      { text: "Múltiplas unidades próprias funcionando com sucesso no formato padrão", score: 10, recommendation: "Modelo amplamente testado. A validação do conceito em diferentes pontos próprios traz segurança extrema e comprova a força do modelo comercial da marca." }
     ]
   },
   { 
-    id: "frq_pro_2", 
-    categoryId: "pro", 
-    categoryName: "Processos", 
-    text: "Os processos operacionais são simples o suficiente para serem ensinados a pessoas sem experiência prévia no setor?",
+    id: "frq_ope_2", 
+    categoryId: "ope", 
+    categoryName: "Operação e Replicabilidade", 
+    text: "Padronização e formalização dos processos",
     options: [
-      { text: "Impossível, requer anos de estudo técnico e prática", score: 0 },
-      { text: "Muito complexos, leva meses para formar alguém", score: 1 },
-      { text: "Complexidade média, exige talento específico", score: 2 },
-      { text: "Relativamente simples, mas o treinamento dura semanas", score: 3 },
-      { text: "Processo fácil de ensinar, em 1 ou 2 semanas a pessoa está apta", score: 4 },
-      { text: "Processos 'à prova de idiotas', simplificados e automatizados ao extremo", score: 5 },
-    ]
-  },
-
-  // Equipe (2)
-  { 
-    id: "frq_equ_1", 
-    categoryId: "equ", 
-    categoryName: "Equipe", 
-    text: "Existe (ou foi projetada) uma equipe dedicada exclusivamente ao suporte contínuo dos franqueados (SAF)?",
-    options: [
-      { text: "Nenhuma, os donos fariam tudo sozinhos no Whatsapp", score: 0 },
-      { text: "Alocaríamos alguém da nossa operação atual quando der tempo", score: 1 },
-      { text: "Pensamos em contratar alguém no futuro para isso", score: 2 },
-      { text: "Projeto de SAF definido e orçado para o início da expansão", score: 3 },
-      { text: "Já temos alguém focado (ou contratado) para gestão da rede", score: 4 },
-      { text: "SAF estruturado com consultores de campo, auditores e suporte contínuo de alta performance", score: 5 },
+      { text: "Sem processos documentados; cada funcionário executa do próprio jeito", score: 0, recommendation: "Caos operacional. A falta de padrão impede a transferência de know-how. Comece mapeando as tarefas críticas (venda, preparo, atendimento) e escrevendo guias simples passo a passo." },
+      { text: "Formalizados, porém desatualizados ou pouco usados", score: 6, recommendation: "Há material de partida. Transformá-lo em manuais de rede estruturados — com padrão, indicador e checklist de auditoria — é o passo que torna a operação replicável." },
+      { text: "Processos totalmente atualizados e documentados em manuais de operação vivos", score: 10, recommendation: "Processos maduros e padronizados. O negócio roda como uma engrenagem, facilitando o treinamento rápido do franqueado e garantindo a qualidade da marca na rede." }
     ]
   },
   { 
-    id: "frq_equ_2", 
-    categoryId: "equ", 
-    categoryName: "Equipe", 
-    text: "A equipe de liderança tem o perfil consultivo necessário para apoiar o sucesso dos parceiros franqueados?",
+    id: "frq_ope_3", 
+    categoryId: "ope", 
+    categoryName: "Operação e Replicabilidade", 
+    text: "Transferibilidade do know-how (curva de aprendizado)",
     options: [
-      { text: "Somos muito técnicos (fazemos), não sabemos ensinar ou liderar", score: 0 },
-      { text: "Focamos apenas em mandar, perfil muito autoritário", score: 1 },
-      { text: "Liderança razoável, mas pouca experiência em consultoria de negócios", score: 2 },
-      { text: "Bons líderes, com disposição genuína de ajudar", score: 3 },
-      { text: "Perfil forte de desenvolvimento de pessoas e gestão de conflitos", score: 4 },
-      { text: "Líderes de classe mundial, verdadeiros mentores de negócios para os franqueados", score: 5 },
-    ]
-  },
-
-  // Tecnologia (2)
-  { 
-    id: "frq_tec_1", 
-    categoryId: "tec", 
-    categoryName: "Tecnologia", 
-    text: "O software de gestão atual permite integração de dados e visão consolidada pela franqueadora?",
-    options: [
-      { text: "Não usamos software", score: 0 },
-      { text: "Nosso sistema é local e não permite acesso externo", score: 1 },
-      { text: "Sistema básico em nuvem, mas sem portal de franqueadora", score: 2 },
-      { text: "Sistema permite integração, mas precisaríamos pagar/desenvolver", score: 3 },
-      { text: "Sistema pronto para o modelo de franquias com BI para a franqueadora", score: 4 },
-      { text: "Stack tecnológico de ponta, visão em tempo real de todas as métricas da rede", score: 5 },
+      { text: "Operação complexa exigindo anos de formação acadêmica ou técnica específica do operador", score: 2, recommendation: "Baixa transferibilidade. Se o negócio exige habilidades raras de formação demorada, a replicação é lenta. Simplifique processos e use tecnologia para diminuir a dependência técnica." },
+      { text: "Treinamento de 30 a 90 dias com suporte estruturado", score: 7, recommendation: "A transferência é viável, mas custa tempo e dinheiro. Trilha de treinamento de 30 a 90 dias com apoio remoto reduzem essa curva de aprendizado." },
+      { text: "Operação simples, transferível com treinamento prático de 7 a 15 dias", score: 10, recommendation: "Excelente transferibilidade de know-how. A curva de aprendizado rápida barateia a implantação da franquia e atrai investidores de diversos perfis profissionais." }
     ]
   },
   { 
-    id: "frq_tec_2", 
-    categoryId: "tec", 
-    categoryName: "Tecnologia", 
-    text: "A tecnologia da empresa protege os dados sensíveis dos clientes e está aderente à LGPD em escala de rede?",
+    id: "frq_ope_4", 
+    categoryId: "ope", 
+    categoryName: "Operação e Replicabilidade", 
+    text: "Tecnologia e sistemas de gestão",
     options: [
-      { text: "Não sabemos o que é LGPD", score: 0 },
-      { text: "Dados ficam espalhados em cadernos e Whatsapp", score: 1 },
-      { text: "Temos um sistema, mas acessos não são bem controlados", score: 2 },
-      { text: "Controles básicos de segurança e permissões de acesso", score: 3 },
-      { text: "Sistema em conformidade com as regras de proteção de dados", score: 4 },
-      { text: "Segurança de nível corporativo e adequação impecável à LGPD", score: 5 },
+      { text: "Não utilizamos sistemas integrados; controles manuais ou em planilhas desconexas", score: 2, recommendation: "Gargalo tecnológico crítico. Implemente um sistema ERP integrado. O controle operacional de uma rede de franquias é impossível sem centralização e integração de dados." },
+      { text: "Sistema de mercado bem utilizado, com dados confiáveis", score: 6, recommendation: "O sistema atende hoje, mas não a uma rede. Avalie migração ou módulo de franquias da primeira unidade — trocar depois custa muito mais." },
+      { text: "Stack tecnológico homologado e em nuvem, pronto para integração de lojas", score: 10, recommendation: "Infraestrutura de tecnologia madura. Facilita o acompanhamento remoto do faturamento e o compliance fiscal das unidades franqueadas em tempo real." }
+    ]
+  },
+  { 
+    id: "frq_ope_5", 
+    categoryId: "ope", 
+    categoryName: "Operação e Replicabilidade", 
+    text: "Cadeia de suprimentos e fornecedores homologados",
+    options: [
+      { text: "Dependemos de fornecedores ultra locais; sem escala ou contratos comerciais", score: 2, recommendation: "Risco de desabastecimento da rede. Centralize compras e negocie acordos nacionais. Se o franqueado não tiver onde comprar os insumos com preço competitivo, o negócio perde o sentido." },
+      { text: "Fornecedores nacionais homologados, com contrato e escala", score: 9, recommendation: "Cadeia madura. Essa escala de fornecedores nacionais homologados também vira argumento comercial e fonte de receita homologada para o franqueador." },
+      { text: "Logística e distribuição própria ou parceira exclusiva atendendo todo o Brasil", score: 10, recommendation: "Abastecimento blindado. A distribuição exclusiva garante a qualidade do produto e cria um modelo de receita recorrente muito sólido para a franqueadora." }
+    ]
+  },
+  { 
+    id: "frq_ope_6", 
+    categoryId: "ope", 
+    categoryName: "Operação e Replicabilidade", 
+    text: "Padrão de ponto e projeto arquitetônico",
+    options: [
+      { text: "Montamos nossa loja de improviso, sem projetos de arquitetura ou engenharia", score: 0, recommendation: "Sem padrão arquitetônico. É fundamental contratar um arquiteto especializado em varejo para criar um projeto padrão e memorial descritivo dos materiais." },
+      { text: "Padrão definido informalmente, sem projeto técnico", score: 4, recommendation: "Há um padrão definido informalmente, falta o pacote técnico que o franqueado consegue executar sozinho em sua cidade — projeto, memorial e custo de obra estimado." },
+      { text: "Projeto arquitetônico completo e padronizado em 2D e 3D, com especificações executivas", score: 10, recommendation: "Padrão de arquitetura consolidado. Permite orçamentos rápidos e garante a replicação visual idêntica da marca em qualquer cidade do país." }
     ]
   },
 
-  // Expansão (2)
+  // 4. Gestão, Estrutura e Pessoas (4 itens)
   { 
-    id: "frq_exp_1", 
-    categoryId: "exp", 
-    categoryName: "Expansão", 
-    text: "Existe um perfil de franqueado ideal (Persona) documentado para o processo de seleção?",
+    id: "frq_gestao_1", 
+    categoryId: "gestao", 
+    categoryName: "Gestão, Estrutura e Pessoas", 
+    text: "Dependência de pessoa-chave",
     options: [
-      { text: "Venderíamos para qualquer um que tiver dinheiro", score: 0 },
-      { text: "Queremos alguém 'esforçado'", score: 1 },
-      { text: "Temos algumas ideias sobre não querer investidores puros", score: 2 },
-      { text: "Perfil definido informalmente", score: 3 },
-      { text: "Persona clara: conhecemos o perfil financeiro, psicológico e técnico ideal", score: 4 },
-      { text: "Filtro altamente seletivo, matriz de competências definida para aprovação", score: 5 },
+      { text: "O negócio depende 100% da presença física e da tomada de decisão diária do fundador", score: 0, recommendation: "Dono-dependência crítica. Franquear um negócio centralizado no fundador é impossível. O primeiro passo é delegar a operação e capacitar gerentes para tocar a rotina diária." },
+      { text: "Depende bastante de mim ou de um profissional específico", score: 4, recommendation: "A delegação começou, mas a rede exigirá você inteiro na expansão. Preparar sucessão operacional agora libera seu tempo de forma completa para o papel estratégico de franqueador." },
+      { text: "Operação roda sozinha sob liderança de um gerente; donos focados no estratégico", score: 9, recommendation: "Excelente autonomia operacional. O modelo de auto-gerenciamento da unidade própria serve como prova social para investidores de que o negócio é gerível à distância." },
+      { text: "Negócio 100% autônomo e profissionalizado, com processos gerenciais claros", score: 10, recommendation: "Autonomia plena. A liderança própria e processos gerenciais consolidados garantem uma transição suave do fundador para a gestão macro da franqueadora." }
     ]
   },
   { 
-    id: "frq_exp_2", 
-    categoryId: "exp", 
-    categoryName: "Expansão", 
-    text: "O plano de expansão (estudo de territórios, viabilidade e metas de abertura) está definido?",
+    id: "frq_gestao_2", 
+    categoryId: "gestao", 
+    categoryName: "Gestão, Estrutura e Pessoas", 
+    text: "Estrutura para dar suporte à rede (backoffice de franquia)",
     options: [
-      { text: "Não, só queremos abrir onde aparecer oportunidade", score: 0 },
-      { text: "Vamos tentar abrir nas cidades vizinhas", score: 1 },
-      { text: "Temos uma meta de 'abrir 10 unidades', mas sem embasamento", score: 2 },
-      { text: "Estudo inicial de viabilidade em algumas praças", score: 3 },
-      { text: "Geomarketing básico feito e plano de expansão em ondas definido", score: 4 },
-      { text: "Estratégia territorial detalhada, com mapeamento demográfico e logístico otimizado", score: 5 },
+      { text: "Não temos pessoas ou infraestrutura de backoffice planejada", score: 0, recommendation: "Inexistência de suporte. Atender franqueados exige uma equipe de consultoria de campo e suporte. Desenhe o organograma da franqueadora antes de iniciar a expansão." },
+      { text: "Tenho uma pessoa que poderá assumir parte do suporte", score: 6, recommendation: "Estrutura mínima viável para as primeiras unidades. Tenho uma pessoa que poderá assumir parte do suporte, mas defina o ponto de virada de contratação." },
+      { text: "Estrutura corporativa própria de suporte montada e ativa para expansão", score: 10, recommendation: "Suporte corporativo consolidado. A presença de uma equipe multidisciplinar ativa garante atendimento de qualidade e reduz a mortalidade das franquias." }
+    ]
+  },
+  { 
+    id: "frq_gestao_3", 
+    categoryId: "gestao", 
+    categoryName: "Gestão, Estrutura e Pessoas", 
+    text: "Planejamento estratégico e metas de expansão",
+    options: [
+      { text: "Não temos metas de expansão nem planejamento territorial", score: 2, recommendation: "Crescimento desordenado à vista. Sem planejamento de expansão, a marca corre o risco de aceitar franqueados distantes e difíceis de atender. Defina praças-alvo imediatamente." },
+      { text: "Objetivos claros, porém não formalizados", score: 6, recommendation: "A direção existe, falta o plano territorial. Objetivos claros de expansão, porém não formalizados. Definir praças-alvo, ritmo e critério de seleção evita conflitos." },
+      { text: "Plano estratégico de expansão territorial estruturado com base em geomarketing e metas", score: 10, recommendation: "Estratégia de expansão madura. O crescimento mapeado protege a marca, viabiliza a logística de abastecimento e foca os esforços de venda nas cidades corretas." }
+    ]
+  },
+  { 
+    id: "frq_gestao_4", 
+    categoryId: "gestao", 
+    categoryName: "Gestão, Estrutura e Pessoas", 
+    text: "Perfil do empresário para o papel de franqueador",
+    options: [
+      { text: "Não tenho interesse em atuar na gestão de rede; prefiro focar na operação interna", score: 2, recommendation: "Desalinhamento de perfil. O papel do franqueador é ensinar e dar suporte, não operar. Avalie a contratação de um CEO ou diretor de franquias para liderar a expansão." },
+      { text: "Estou disposto, mas sem experiência em gerir relacionamento de rede", score: 7, recommendation: "Postura adequada, faltando repertório de gestão de rede. Estou disposto, mas sem experiência em gerir relacionamento de rede. Formação específica ajuda." },
+      { text: "Experiente em gestão de parcerias corporativas e com visão clara do papel do franqueador", score: 10, recommendation: "Perfil ideal. A liderança consultiva e o foco em parcerias ganha-ganha aceleram o crescimento e constroem um ecossistema de rede muito saudável." }
     ]
   },
 
-  // Mercado (2)
+  // 5. Mercado e Posicionamento (4 itens)
   { 
-    id: "frq_mer_1", 
-    categoryId: "mer", 
-    categoryName: "Mercado", 
-    text: "O mercado de atuação do negócio está em crescimento e possui demanda comprovada em outras praças?",
+    id: "frq_mercado_1", 
+    categoryId: "mercado", 
+    categoryName: "Mercado e Posicionamento", 
+    text: "Ciclo de vida do setor de atuação",
     options: [
-      { text: "Mercado em declínio e saturado", score: 0 },
-      { text: "É uma moda passageira (onda curta)", score: 1 },
-      { text: "Mercado estável, mas muito local e cultural", score: 2 },
-      { text: "Mercado sólido com demanda constante", score: 3 },
-      { text: "Mercado em crescimento acelerado no país inteiro", score: 4 },
-      { text: "Oceano azul ou nicho trilionário em expansão contínua", score: 5 },
+      { text: "Setor maduro ou em declínio acentuado; concorrência esmagadora por preço", score: 2, recommendation: "Setor desafiador. Franquear em mercados saturados ou decrescentes exige um modelo disruptivo de baixo custo ou diferenciais extremos para atrair investidores." },
+      { text: "Setor emergente (novidade), com alta demanda mas sem estabilidade histórica", score: 6, recommendation: "Setor dinâmico. A novidade atrai investidores rápidos, mas requer cuidado para garantir que a demanda não seja apenas um modismo passageiro. Consolide o modelo." },
+      { text: "Crescimento: empresa e concorrentes crescem", score: 10, recommendation: "Setor em expansão acelerada — o cenário mais favorável para captar franqueados e obter crédito comercial no ciclo de expansão da marca." }
     ]
   },
   { 
-    id: "frq_mer_2", 
-    categoryId: "mer", 
-    categoryName: "Mercado", 
-    text: "A empresa possui diferenciais competitivos fortes que a protegem contra a cópia fácil por concorrentes locais?",
+    id: "frq_mercado_2", 
+    categoryId: "mercado", 
+    categoryName: "Mercado e Posicionamento", 
+    text: "Diferenciais competitivos reconhecidos pelo cliente",
     options: [
-      { text: "Somos iguais a qualquer concorrente da esquina", score: 0 },
-      { text: "Diferencial é só 'qualidade e atendimento'", score: 1 },
-      { text: "Temos algumas exclusividades pequenas de produto", score: 2 },
-      { text: "Bom custo-benefício e marca conhecida", score: 3 },
-      { text: "Diferencial claro de negócio, tecnologia ou fornecimento exclusivo", score: 4 },
-      { text: "Barreira de entrada altíssima (moat), impossível de ser copiado com facilidade", score: 5 },
+      { text: "Diferenciais fracos; concorrentes oferecem produtos idênticos na mesma praça", score: 2, recommendation: "Commoditização crítica. A falta de diferenciais claros mata a atratividade do modelo. Foque em branding, embalagens, tecnologia ou experiências exclusivas de atendimento." },
+      { text: "Dois diferenciais claros", score: 4, recommendation: "Diferenciais competitivos existem, mas precisam ser estruturados e transformados em proposta de valor comunicável ao consumidor e ao candidato a franqueado." },
+      { text: "Diferenciais robustos protegidos por contratos de exclusividade ou patente", score: 10, recommendation: "Barreira competitiva sólida. Ter diferenciais robustos protegidos por contratos de exclusividade ou patente protege o faturamento da rede contra cópias fáceis." }
     ]
   },
+  { 
+    id: "frq_mercado_3", 
+    categoryId: "mercado", 
+    categoryName: "Mercado e Posicionamento", 
+    text: "Marketing, presença digital e reputação",
+    options: [
+      { text: "Marketing inativo; sem presença profissional nas redes sociais ou anúncios", score: 0, recommendation: "Marketing defasado. Uma marca invisível digitalmente não vende franquias nem atrai clientes. Invista em uma agência especializada e estruture sua presença online." },
+      { text: "Plano parcial, com ações digitais recorrentes", score: 6, recommendation: "Boa base. Plano parcial de marketing com ações recorrentes. Falta transformar o marketing em ativo de rede com verba de fundo de propaganda e kit de abertura." },
+      { text: "Autoridade digital no setor, com marca amplamente reconhecida e leads ativos", score: 10, recommendation: "Marketing forte e atrativo. A força digital da marca gera demanda espontânea de clientes para as novas lojas e barateia o marketing de atração de franqueados." }
+    ]
+  },
+  { 
+    id: "frq_mercado_4", 
+    categoryId: "mercado", 
+    categoryName: "Mercado e Posicionamento", 
+    text: "Validação de demanda por franquias da sua marca",
+    options: [
+      { text: "Ninguém nunca demonstrou interesse em abrir filiais ou franquias da marca", score: 2, recommendation: "Sem demanda espontânea. Será necessário fazer um investimento ativo em publicidade e portais de franquia para atrair os primeiros candidatos a franqueados." },
+      { text: "Recebi manifestações esporádicas de conhecidos", score: 4, recommendation: "Há sinal de mercado. Recebi manifestações esporádicas de conhecidos. Estruturar canal de captação e critério de seleção evita vender para candidato errado." },
+      { text: "Fila de espera de candidatos interessados em abrir franquias em diversas cidades", score: 10, recommendation: "Demanda validada e aquecida. Fila de espera de candidatos interessados permite ao franqueador ser extremamente seletivo na aprovação dos primeiros parceiros." }
+    ]
+  }
 ];

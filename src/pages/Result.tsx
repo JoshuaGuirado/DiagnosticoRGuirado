@@ -1,101 +1,164 @@
-import React, { useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useStore } from '@/src/store';
 import { Card } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { 
-  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
-  BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell,
-  PieChart, Pie
+  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer
 } from 'recharts';
-import { Download, ChevronLeft, Building2, TrendingUp, CheckCircle2 } from 'lucide-react';
+import { Download, ChevronLeft, Lock, FileText, ClipboardList, TrendingUp, Star, Phone, CheckCircle2, AlertTriangle, Printer } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { toPng } from 'html-to-image';
-import { diagnosticoEmpresarial, diagnosticoFranqueabilidade } from '../data/questions';
+import { diagnosticoFranqueabilidade } from '../data/questions';
+import { cn } from '@/src/lib/utils';
 
 export function Result() {
   const { id } = useParams<{ id: string }>();
   const results = useStore(state => state.results);
+  const updateResultRating = useStore(state => state.updateResultRating);
+  
   const result = results.find(r => r.id === id);
   const reportRef = useRef<HTMLDivElement>(null);
 
+  const [activeTab, setActiveTab] = useState<'resultado' | 'plano' | 'inicio' | 'respostas'>('resultado');
+  const [ratingHover, setRatingHover] = useState<number | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+
   if (!result) {
     return (
-      <div className="text-center py-20">
-        <h2 className="text-2xl font-bold mb-4">Resultado não encontrado</h2>
+      <div className="text-center py-20 bg-white rounded-3xl border shadow-sm">
+        <h2 className="text-2xl font-bold mb-4 text-[#1A2840]">Resultado não encontrado</h2>
         <Link to="/"><Button>Voltar ao Início</Button></Link>
       </div>
     );
   }
 
-  const { type, score, categoryScores, categoryMaxScores } = result;
-  
-  // Format data for charts
-  const chartData = Object.keys(categoryScores).map(key => {
-    const nameMap: Record<string, string> = {
-      pe: 'Planej. Estratégico', fin: 'Financeiro', com: 'Comercial', mkt: 'Marketing',
-      ope: 'Operações', rh: 'RH', tec: 'Tecnologia',
-      mod: 'Modelo', ren: 'Rentabilidade', pad: 'Padronização', mar: 'Marca',
-      pro: 'Processos', equ: 'Equipe', exp: 'Expansão', mer: 'Mercado'
+  const { clientName, companyName, email, phone, city, segment, operationTime, ownUnits, revenue, date, answers } = result;
+
+  // Lógica de cálculo ponderado idêntica à planilha
+  const getCalculatedMetrics = () => {
+    const categories = [
+      { id: 'marca', name: 'Marca e Blindagem Jurídica', weight: 0.20, count: 5 },
+      { id: 'fin', name: 'Saúde Econômico-Financeira', weight: 0.25, count: 6 },
+      { id: 'ope', name: 'Operação e Replicabilidade', weight: 0.25, count: 6 },
+      { id: 'gestao', name: 'Gestão, Estrutura e Pessoas', weight: 0.15, count: 4 },
+      { id: 'mercado', name: 'Mercado e Posicionamento', weight: 0.15, count: 4 },
+    ];
+
+    let calculatedOverallScore = 0;
+    const rows = categories.map(cat => {
+      const catQuestions = diagnosticoFranqueabilidade.filter(q => q.categoryId === cat.id);
+      const maxScore = cat.count * 10;
+      
+      let obtainedScore = 0;
+      catQuestions.forEach(q => {
+        obtainedScore += answers[q.id] || 0;
+      });
+
+      const aproveitamento = maxScore > 0 ? obtainedScore / maxScore : 0;
+      const contribution = aproveitamento * cat.weight;
+      
+      calculatedOverallScore += contribution * 100;
+
+      return {
+        id: cat.id,
+        name: cat.name,
+        obtained: obtainedScore,
+        max: maxScore,
+        aproveitamento: Math.round(aproveitamento * 1000) / 10,
+        weight: cat.weight * 100,
+        contribution: Math.round(contribution * 1000) / 10
+      };
+    });
+
+    return {
+      rows,
+      overallScore: Math.round(calculatedOverallScore * 10) / 10
     };
-    const percentage = Math.round((categoryScores[key] / categoryMaxScores[key]) * 100);
-    return { subject: nameMap[key] || key, A: percentage, fullMark: 100 };
-  });
+  };
 
-  // Calculate classifications
-  let classification = { text: '', color: '', bg: '', hex: '' };
-  if (type === 'empresarial') {
-    if (score <= 30) classification = { text: 'Empresa em Risco', color: 'text-red-600', bg: 'bg-red-100', hex: '#ef4444' };
-    else if (score <= 60) classification = { text: 'Empresa em Estruturação', color: 'text-yellow-600', bg: 'bg-yellow-100', hex: '#eab308' };
-    else if (score <= 80) classification = { text: 'Empresa Organizada', color: 'text-blue-600', bg: 'bg-blue-100', hex: '#3b82f6' };
-    else classification = { text: 'Pronta para Expansão', color: 'text-green-600', bg: 'bg-green-100', hex: '#22c55e' };
+  const { rows: dimensionRows, overallScore } = getCalculatedMetrics();
+
+  // Classificações com base na pontuação geral
+  let classification = { text: '', color: '', bg: '', hex: '', description: '' };
+  if (overallScore <= 30) {
+    classification = {
+      text: 'RISCO CRÍTICO',
+      color: 'text-red-600',
+      bg: 'bg-red-50 border-red-200',
+      hex: '#ef4444',
+      description: 'Seu negócio apresenta fragilidades estruturais críticas que inviabilizam a formatação de uma franquia no momento. É recomendável focar todos os esforços operacionais e financeiros em estabilizar e validar o modelo de negócio próprio antes de planejar qualquer expansão.'
+    };
+  } else if (overallScore <= 60) {
+    classification = {
+      text: 'EM PREPARAÇÃO',
+      color: 'text-yellow-600',
+      bg: 'bg-yellow-50 border-yellow-200',
+      hex: '#f3c611',
+      description: 'Seu negócio tem fundamentos consistentes e já dá sinais claros de potencial para virar rede. Restam ajustes relevantes — normalmente concentrados em documentação, padronização e engenharia financeira do modelo. É o estágio em que a consultoria costuma gerar o maior salto de valor em menor tempo.'
+    };
+  } else if (overallScore <= 80) {
+    classification = {
+      text: 'POTENCIAL AVANÇADO',
+      color: 'text-blue-600',
+      bg: 'bg-blue-50 border-blue-200',
+      hex: '#3b82f6',
+      description: 'O seu negócio possui excelente maturidade de processos e uma marca forte. Está muito próximo de se tornar uma franqueadora de sucesso. Resta realizar a formatação jurídica formal (COF e Contratos) e estruturar a equipe básica de suporte para iniciar a expansão com total segurança.'
+    };
   } else {
-    if (score <= 30) classification = { text: 'Não Franqueável', color: 'text-red-600', bg: 'bg-red-100', hex: '#ef4444' };
-    else if (score <= 60) classification = { text: 'Potencial Baixo', color: 'text-yellow-600', bg: 'bg-yellow-100', hex: '#eab308' };
-    else if (score <= 80) classification = { text: 'Potencial Médio', color: 'text-blue-600', bg: 'bg-blue-100', hex: '#3b82f6' };
-    else classification = { text: 'Alto Potencial para Franquia', color: 'text-green-600', bg: 'bg-green-100', hex: '#22c55e' };
+    classification = {
+      text: 'PRONTA PARA EXPANSÃO',
+      color: 'text-green-600',
+      bg: 'bg-green-50 border-green-200',
+      hex: '#22c55e',
+      description: 'Excelente potencial para virar franquia. A operação é madura, altamente replicável e consolidada em todas as frentes. Seu negócio está 100% pronto para iniciar o processo de formatação e expansão nacional acelerada.'
+    };
   }
 
-  const sortedCategories = [...chartData].sort((a, b) => b.A - a.A);
-  const strongest = sortedCategories.slice(0, 2).map(c => c.subject).join(' e ');
-  const weakest = sortedCategories.slice(-2).map(c => c.subject).join(' e ');
-  
-  let summaryText = '';
-  
-  if (type === 'empresarial') {
-    if (score < 40) {
-      summaryText = `A empresa apresenta fragilidades estruturais gerais, com urgência de ação em ${weakest}. É necessário um plano de reestruturação focado no básico bem feito antes de pensar em crescimento.`;
-    } else if (sortedCategories[0]?.A < 50) {
-      summaryText = `A empresa apresenta baixo nível de maturidade geral. Embora ${strongest} tenham um desempenho ligeiramente melhor, a fragilidade em ${weakest} exige atenção imediata.`;
-    } else {
-      summaryText = `A empresa possui boa estrutura em ${strongest}, porém apresenta fragilidade em ${weakest}. Recomenda-se fortalecer a base de ${weakest} para sustentar o crescimento.`;
-    }
-  } else {
-    if (score < 40) {
-       summaryText = `A empresa ainda não apresenta os requisitos mínimos para formatação de franquia, precisando focar urgentemente na estruturação de ${weakest}. O modelo de negócio precisa amadurecer.`;
-    } else if (sortedCategories[0]?.A < 50) {
-       summaryText = `A empresa possui maturidade incipiente. Apesar de leve destaque em ${strongest}, as lacunas críticas em ${weakest} impedem uma expansão segura no momento.`;
-    } else {
-       summaryText = `A empresa apresenta elevado potencial e pontos fortes significativos em ${strongest}. Recomenda-se evoluir e padronizar ${weakest} antes de iniciar a expansão em rede.`;
-    }
-  }
+  // Contagem de pontos de bloqueio (score <= 3)
+  const blockingPointsCount = diagnosticoFranqueabilidade.filter(q => (answers[q.id] !== undefined && answers[q.id] <= 3)).length;
+
+  // Formatar dados para o gráfico de Radar
+  const chartData = dimensionRows.map(row => ({
+    subject: row.name.split(' ')[0], // Apenas a primeira palavra para ficar limpo no gráfico
+    A: row.aproveitamento,
+    fullMark: 100
+  }));
+
+  // Geração de mensagem automática para WhatsApp
+  const whatsappNumber = '5544999665711';
+  const whatsappMessage = encodeURIComponent(
+    `Olá! Acabei de realizar o Pré-Diagnóstico de Franqueabilidade no site da R.Guirado Consultoria.\n\n` +
+    `*Empresa:* ${companyName || 'Minha Empresa'}\n` +
+    `*Responsável:* ${clientName}\n` +
+    `*Índice de Franqueabilidade:* ${overallScore}%\n` +
+    `*Classificação:* ${classification.text}\n` +
+    `*Pontos de Bloqueio Crítico:* ${blockingPointsCount}\n\n` +
+    `Gostaria de agendar uma conversa com um especialista para debater os próximos passos e o meu Plano de Ação.`
+  );
 
   const handleExportPDF = async () => {
     if (!reportRef.current) return;
+    setIsExporting(true);
     try {
-      const width = reportRef.current.scrollWidth;
+      // Pequeno delay para garantir que o container escondido renderizou
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const width = 1000; // Largura fixa ideal para folha A4 em pixel ratio alto
       const height = reportRef.current.scrollHeight;
+      
       const dataUrl = await toPng(reportRef.current, { 
         cacheBust: true, 
         pixelRatio: 2,
         width,
         height,
-        style: { transform: 'none' }
+        style: { 
+          transform: 'none',
+          position: 'static',
+          left: 'auto',
+          top: 'auto'
+        }
       });
-      
-      const img = new Image();
-      img.src = dataUrl;
-      await new Promise(resolve => { img.onload = resolve; });
       
       const pdf = new jsPDF({
         orientation: 'p',
@@ -104,228 +167,578 @@ export function Result() {
       });
       
       pdf.addImage(dataUrl, 'PNG', 0, 0, width, height);
-      pdf.save(`Diagnostico_${result.clientName.replace(/\s+/g, '_')}.pdf`);
+      pdf.save(`Diagnostico_${(companyName || clientName).replace(/\s+/g, '_')}.pdf`);
     } catch (error) {
       console.error("Erro ao exportar PDF:", error);
+    } finally {
+      setIsExporting(false);
     }
   };
 
-  const getBarColor = (value: number) => {
-    if (value <= 30) return '#ef4444';
-    if (value <= 60) return '#eab308';
-    if (value <= 80) return '#3b82f6';
-    return '#22c55e';
+  const getSituationStyle = (score: number | undefined) => {
+    if (score === undefined) return { label: 'Pendente', bg: 'bg-gray-100 text-gray-500 border-gray-200' };
+    if (score <= 3) return { label: 'BLOQUEIO CRÍTICO', bg: 'bg-red-50 text-red-600 border-red-200 font-bold' };
+    if (score <= 6) return { label: 'Prioridade média', bg: 'bg-yellow-50 text-yellow-600 border-yellow-200 font-medium' };
+    return { label: 'Consolidado', bg: 'bg-green-50 text-green-600 border-green-200 font-medium' };
   };
 
-  const gaugeData = [
-    { name: 'Score', value: score, fill: classification.hex },
-    { name: 'Empty', value: 100 - score, fill: '#f3f4f6' }
-  ];
-
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
-      <div className="flex justify-between items-center mb-8">
+    <div className="max-w-6xl mx-auto space-y-6">
+      {/* Header Actions */}
+      <div className="flex justify-between items-center mb-2 shrink-0">
         <Link to="/">
-          <Button variant="ghost" size="sm" className="gap-2 -ml-4">
+          <Button variant="ghost" size="sm" className="gap-2 -ml-2">
             <ChevronLeft className="w-4 h-4" /> Voltar
           </Button>
         </Link>
-        <Button onClick={handleExportPDF} className="gap-2">
-          <Download className="w-4 h-4" /> Exportar PDF
+        <Button onClick={handleExportPDF} className="gap-2" disabled={isExporting}>
+          <Download className="w-4 h-4" /> {isExporting ? 'Gerando...' : 'Exportar PDF'}
         </Button>
       </div>
 
-      <div ref={reportRef} className="bg-white rounded-[32px] p-8 md:p-12 shadow-soft border border-white space-y-12">
-        {/* Header */}
-        <div className="flex justify-between items-start border-b border-gray-100 pb-8">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-8 h-8 rounded-full border-2 border-[#1A2840] flex items-center justify-center text-[#1A2840] font-bold text-sm">
-                R
+      {/* Tabs Menu */}
+      <div className="flex border-b border-gray-200 bg-white rounded-t-2xl shadow-sm overflow-x-auto scrollbar-none shrink-0">
+        <button
+          onClick={() => setActiveTab('resultado')}
+          className={cn(
+            "flex items-center gap-2 px-6 py-4 text-sm font-bold border-b-2 transition-all cursor-pointer",
+            activeTab === 'resultado'
+              ? "border-[#1F4761] text-[#1F4761] bg-gray-50/50"
+              : "border-transparent text-gray-500 hover:text-[#1F4761]"
+          )}
+        >
+          <TrendingUp className="w-4 h-4" /> Resultado
+        </button>
+
+        <button
+          onClick={() => setActiveTab('plano')}
+          className={cn(
+            "flex items-center gap-2 px-6 py-4 text-sm font-bold border-b-2 transition-all cursor-pointer",
+            activeTab === 'plano'
+              ? "border-[#1F4761] text-[#1F4761] bg-gray-50/50"
+              : "border-transparent text-gray-500 hover:text-[#1F4761]"
+          )}
+        >
+          <ClipboardList className="w-4 h-4" /> Plano de Ação
+        </button>
+
+        <button
+          onClick={() => setActiveTab('inicio')}
+          className={cn(
+            "flex items-center gap-2 px-6 py-4 text-sm font-bold border-b-2 transition-all cursor-pointer",
+            activeTab === 'inicio'
+              ? "border-[#1F4761] text-[#1F4761] bg-gray-50/50"
+              : "border-transparent text-gray-500 hover:text-[#1F4761]"
+          )}
+        >
+          <FileText className="w-4 h-4" /> Dados do Cliente
+        </button>
+
+        <button
+          onClick={() => setActiveTab('respostas')}
+          className={cn(
+            "flex items-center gap-2 px-6 py-4 text-sm font-bold border-b-2 transition-all cursor-pointer",
+            activeTab === 'respostas'
+              ? "border-[#1F4761] text-[#1F4761] bg-gray-50/50"
+              : "border-transparent text-gray-500 hover:text-[#1F4761]"
+          )}
+        >
+          <CheckCircle2 className="w-4 h-4" /> Respostas
+        </button>
+      </div>
+
+      {/* Tab Content */}
+      <div className="bg-white rounded-b-2xl shadow-soft p-6 md:p-10 border-t border-gray-100 min-h-[500px]">
+        {activeTab === 'inicio' && (
+          <div className="space-y-8">
+            <h3 className="text-lg font-bold text-[#1A2840] uppercase tracking-wide border-b border-gray-100 pb-2">Dados Cadastrados</h3>
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 bg-gray-50 p-6 rounded-2xl border border-gray-100 text-sm">
+              <div>
+                <span className="text-xs font-bold text-gray-400 uppercase block">Nome Completo</span>
+                <span className="font-semibold text-gray-700 block mt-1">{clientName}</span>
               </div>
-              <span className="text-gray-500 font-semibold uppercase tracking-wider text-sm">R. Guirado Consultoria</span>
+              <div>
+                <span className="text-xs font-bold text-gray-400 uppercase block">Empresa / Marca</span>
+                <span className="font-semibold text-gray-700 block mt-1">{companyName || '-'}</span>
+              </div>
+              <div>
+                <span className="text-xs font-bold text-gray-400 uppercase block">E-mail</span>
+                <span className="font-semibold text-gray-700 block mt-1">{email || '-'}</span>
+              </div>
+              <div>
+                <span className="text-xs font-bold text-gray-400 uppercase block">WhatsApp</span>
+                <span className="font-semibold text-gray-700 block mt-1">{phone}</span>
+              </div>
+              <div>
+                <span className="text-xs font-bold text-gray-400 uppercase block">Cidade / UF</span>
+                <span className="font-semibold text-gray-700 block mt-1">{city}</span>
+              </div>
+              <div>
+                <span className="text-xs font-bold text-gray-400 uppercase block">Segmento de atuação</span>
+                <span className="font-semibold text-gray-700 block mt-1">{segment || '-'}</span>
+              </div>
+              <div>
+                <span className="text-xs font-bold text-gray-400 uppercase block">Tempo de operação</span>
+                <span className="font-semibold text-gray-700 block mt-1">{operationTime || '-'}</span>
+              </div>
+              <div>
+                <span className="text-xs font-bold text-gray-400 uppercase block">Nº de unidades próprias</span>
+                <span className="font-semibold text-gray-700 block mt-1">{ownUnits || '-'}</span>
+              </div>
+              <div>
+                <span className="text-xs font-bold text-gray-400 uppercase block">Faturamento médio</span>
+                <span className="font-semibold text-gray-700 block mt-1">{revenue || '-'}</span>
+              </div>
+              <div>
+                <span className="text-xs font-bold text-gray-400 uppercase block">Data do preenchimento</span>
+                <span className="font-semibold text-gray-700 block mt-1">{new Date(date).toLocaleDateString('pt-BR')}</span>
+              </div>
             </div>
-            <h1 className="text-3xl font-bold text-[#1A2840] mt-4">{result.clientName}</h1>
-            <p className="text-gray-500 mt-2 font-medium">
-              {type === 'empresarial' ? 'Diagnóstico Empresarial' : 'Diagnóstico de Franqueabilidade'}
-            </p>
-            <div className="flex flex-wrap gap-x-6 gap-y-2 mt-4 text-sm text-gray-600">
-              {result.phone && (
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-gray-400">WhatsApp:</span> {result.phone}
-                </div>
-              )}
-              {result.city && (
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-gray-400">Local:</span> {result.city}
-                </div>
-              )}
-              {result.niche && (
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-gray-400">Nicho:</span> {result.niche}
-                </div>
-              )}
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-gray-400">Data:</span> {new Date(result.date).toLocaleDateString('pt-BR')}
-              </div>
+
+            <div className="space-y-4 bg-gray-50 p-6 rounded-2xl border border-gray-100 text-sm">
+              <h3 className="text-md font-bold text-[#1A2840] uppercase tracking-wide">Como Funcionou</h3>
+              <ol className="list-decimal pl-5 space-y-2 text-gray-600">
+                <li>O preenchimento foi realizado na aba «Questionário», onde foram respondidas as 25 perguntas avaliando o modelo de negócio próprio do cliente.</li>
+                <li>A pontuação ponderada foi calculada baseando-se no aproveitamento individual de cada área e seus respectivos pesos de mercado.</li>
+                <li>As dimensões possuem pesos distintos: Marca (20%), Saúde Financeira (25%), Operação (25%), Gestão (15%), Mercado (15%).</li>
+              </ol>
             </div>
           </div>
-          {type === 'empresarial' && (
-            <div className="text-right">
-              <div className="text-5xl font-bold text-[#1A2840]">{score}
-                <span className="text-2xl text-gray-400">/100</span>
+        )}
+
+        {activeTab === 'respostas' && (
+          <div className="space-y-6">
+            <h3 className="text-lg font-bold text-[#1A2840] uppercase tracking-wide border-b border-gray-100 pb-2">Tabela de Respostas e Pontuações</h3>
+            <div className="overflow-x-auto rounded-2xl border border-gray-100 shadow-sm bg-white">
+              <table className="w-full text-left border-collapse min-w-[800px] text-sm">
+                <thead>
+                  <tr className="bg-gray-50 text-gray-500 border-b border-gray-100 font-bold">
+                    <th className="py-4 px-4 w-12 text-center">Nº</th>
+                    <th className="py-4 px-4 w-48">Dimensão</th>
+                    <th className="py-4 px-4 w-64">Item avaliado</th>
+                    <th className="py-4 px-4">Resposta Escolhida</th>
+                    <th className="py-4 px-4 w-20 text-center">Pontos</th>
+                    <th className="py-4 px-4 w-44">Situação</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {diagnosticoFranqueabilidade.map((q, idx) => {
+                    const score = answers[q.id];
+                    const selectedOption = q.options.find(opt => opt.score === score);
+                    const situation = getSituationStyle(score);
+
+                    return (
+                      <tr key={q.id} className="hover:bg-gray-50/50">
+                        <td className="py-3 px-4 font-semibold text-gray-400 text-center">{idx + 1}</td>
+                        <td className="py-3 px-4 text-xs font-semibold uppercase text-gray-500">
+                          <span className={cn(
+                            "px-2 py-0.5 rounded-md",
+                            q.categoryId === 'marca' ? 'bg-blue-50 text-blue-700' :
+                            q.categoryId === 'fin' ? 'bg-emerald-50 text-emerald-700' :
+                            q.categoryId === 'ope' ? 'bg-purple-50 text-purple-700' :
+                            q.categoryId === 'gestao' ? 'bg-amber-50 text-amber-700' :
+                            'bg-pink-50 text-pink-700'
+                          )}>
+                            {q.categoryName}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 font-medium text-[#1A2840]">{q.text}</td>
+                        <td className="py-3 px-4 text-gray-600">{selectedOption?.text || '-'}</td>
+                        <td className="py-3 px-4 font-bold text-center text-[#1A2840]">{score}</td>
+                        <td className="py-3 px-4">
+                          <span className={cn(
+                            "inline-block px-2.5 py-0.5 rounded-full text-[11px] border text-center min-w-[120px]",
+                            situation.bg
+                          )}>
+                            {situation.label}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'resultado' && (
+          <div className="space-y-10">
+            {/* Index Header */}
+            <div className="grid md:grid-cols-3 gap-6 items-center border-b border-gray-100 pb-8">
+              <div className="md:col-span-2 space-y-1">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Pré-Diagnóstico Finalizado</span>
+                <h1 className="text-3xl font-extrabold text-[#1A2840]">{companyName || clientName}</h1>
+                <p className="text-sm text-gray-500">Segmento: {segment} • Realizado em {new Date(date).toLocaleDateString('pt-BR')}</p>
               </div>
-              <div className={`mt-3 inline-block px-4 py-1.5 rounded-full text-sm font-semibold ${classification.bg} ${classification.color}`}>
-                {classification.text}
+              <div className="flex items-center justify-between sm:justify-end gap-6 bg-[#1A2840] text-white p-5 rounded-2xl">
+                <div className="text-left">
+                  <span className="text-[10px] opacity-60 font-bold block uppercase tracking-wide">ÍNDICE DE FRANQUEABILIDADE</span>
+                  <span className="text-4xl font-extrabold text-[#F3C611]">{overallScore}%</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] opacity-60 font-bold block uppercase tracking-wide">RESULTADO</span>
+                  <span className="text-xs font-bold bg-[#F3C611]/25 text-[#F3C611] px-2.5 py-1 rounded-full block mt-1">VÁLIDO</span>
+                </div>
               </div>
             </div>
-          )}
-        </div>
 
-        {/* Summary */}
-        <div>
-          <h2 className="text-xl font-bold text-[#1A2840] mb-4">Parecer Executivo</h2>
-          <p className="text-gray-700 leading-relaxed text-lg border-l-4 border-[#F3C611] pl-6 py-2 bg-gray-50 rounded-r-xl">
-            {summaryText}
-          </p>
-        </div>
-
-        {/* Charts Grid */}
-        <div className="grid md:grid-cols-2 gap-12">
-          {type === 'empresarial' ? (
-            <>
+            {/* Performance table and Recharts Radar chart */}
+            <div className="grid lg:grid-cols-2 gap-10">
               <div className="space-y-4">
-                <h3 className="text-lg font-bold text-center text-[#1A2840]">Radar de Maturidade</h3>
-                <div className="h-[300px] w-full">
+                <h3 className="text-md font-bold text-[#1A2840] uppercase tracking-wide border-b border-gray-100 pb-2">Desempenho por Dimensão</h3>
+                <div className="overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-gray-50 text-gray-500 font-bold border-b border-gray-100">
+                        <th className="py-3 px-3">Dimensão</th>
+                        <th className="py-3 px-3 text-center">Pontos obtidos</th>
+                        <th className="py-3 px-3 text-center">Aproveitamento (%)</th>
+                        <th className="py-3 px-3 text-center">Peso (%)</th>
+                        <th className="py-3 px-3 text-center">Contribuição (%)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 font-medium text-gray-700">
+                      {dimensionRows.map((row, i) => (
+                        <tr key={i} className="hover:bg-gray-50/50">
+                          <td className="py-3 px-3 font-semibold">{row.name}</td>
+                          <td className="py-3 px-3 text-center">{row.obtained} / {row.max}</td>
+                          <td className="py-3 px-3 text-center">{row.aproveitamento}%</td>
+                          <td className="py-3 px-3 text-center text-gray-400">{row.weight}%</td>
+                          <td className="py-3 px-3 text-center text-[#1F4761] font-bold">{row.contribution}%</td>
+                        </tr>
+                      ))}
+                      <tr className="bg-gray-50 font-bold text-gray-800 border-t border-gray-200">
+                        <td className="py-3 px-3">TOTAL</td>
+                        <td className="py-3 px-3 text-center">
+                          {dimensionRows.reduce((a, b) => a + b.obtained, 0)} / 250
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          {Math.round((dimensionRows.reduce((a, b) => a + b.obtained, 0) / 250) * 1000) / 10}%
+                        </td>
+                        <td className="py-3 px-3 text-center text-gray-400">100%</td>
+                        <td className="py-3 px-3 text-center text-[#1A2840] font-extrabold text-sm">{overallScore}%</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Radar chart */}
+              <div className="flex flex-col items-center justify-center bg-gray-50/50 border border-gray-100 rounded-2xl p-6 min-h-[300px]">
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Radar de Desempenho</h4>
+                <div className="w-full h-[260px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart cx="50%" cy="50%" outerRadius="70%" data={chartData}>
-                      <PolarGrid stroke="#e5e7eb" />
-                      <PolarAngleAxis dataKey="subject" tick={{ fill: '#4b5563', fontSize: 12 }} />
+                    <RadarChart cx="50%" cy="50%" outerRadius="75%" data={chartData}>
+                      <PolarGrid stroke="#e2e8f0" />
+                      <PolarAngleAxis dataKey="subject" tick={{ fill: '#4b5563', fontSize: 10, fontWeight: 600 }} />
                       <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                      <Radar name="Pontuação" dataKey="A" stroke="#1F4761" fill="#1F4761" fillOpacity={0.2} />
+                      <Radar name="Aproveitamento" dataKey="A" stroke="#1F4761" fill="#1F4761" fillOpacity={0.15} />
                     </RadarChart>
                   </ResponsiveContainer>
                 </div>
               </div>
-              <div className="space-y-4">
-                <h3 className="text-lg font-bold text-center text-[#1A2840]">Desempenho por Área (%)</h3>
-                <div className="h-[300px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 30, left: 40, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
-                      <XAxis type="number" domain={[0, 100]} hide />
-                      <YAxis dataKey="subject" type="category" axisLine={false} tickLine={false} tick={{ fill: '#4b5563', fontSize: 12 }} width={100} />
-                      <Tooltip cursor={{fill: '#f9fafb'}} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                      <Bar dataKey="A" radius={[0, 4, 4, 0]} barSize={20}>
-                        {chartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={getBarColor(entry.A)} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+            </div>
+
+            {/* Classification Card */}
+            <div className={cn("p-6 rounded-2xl border-l-4 shadow-sm", classification.bg)}>
+              <span className="text-[10px] font-extrabold uppercase tracking-widest block opacity-75">Classificação do Negócio</span>
+              <h3 className={cn("text-xl font-black mt-1 uppercase tracking-wide", classification.color)}>{classification.text}</h3>
+              <p className="text-gray-700 leading-relaxed text-sm mt-3">{classification.description}</p>
+            </div>
+
+            {/* Critical Blocking Points */}
+            {blockingPointsCount > 0 ? (
+              <div className="p-6 bg-red-50/50 border border-red-200/50 rounded-2xl flex gap-4">
+                <AlertTriangle className="w-6 h-6 text-red-500 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-sm font-bold text-red-700 uppercase tracking-wide">Pontos de Bloqueio Críticos</h4>
+                  <p className="text-xs text-red-600 leading-relaxed mt-2">
+                    Foram identificados <strong>{blockingPointsCount} ponto(s) de bloqueio crítico</strong>. São itens avaliados que, isoladamente, impedem a formatação e expansão segura de uma rede de franquias — independentemente da sua nota geral no índice. Eles estão detalhados com a indicação vermelha de <strong>BLOQUEIO CRÍTICO</strong> na aba <strong>Plano de Ação</strong> e precisam ser sanados antes de qualquer outra iniciativa.
+                  </p>
                 </div>
               </div>
-            </>
-          ) : (
-            <>
-              <div className="space-y-4 flex flex-col items-center justify-center">
-                <h3 className="text-lg font-bold text-center text-[#1A2840] mb-6">Velocímetro de Potencial</h3>
-                <div className="relative w-[300px] h-[150px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={gaugeData}
-                        cx="50%"
-                        cy="100%"
-                        startAngle={180}
-                        endAngle={0}
-                        innerRadius={90}
-                        outerRadius={120}
-                        stroke="none"
-                        dataKey="value"
+            ) : (
+              <div className="p-6 bg-green-50/50 border border-green-200/50 rounded-2xl flex gap-4">
+                <CheckCircle2 className="w-6 h-6 text-green-500 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-sm font-bold text-green-700 uppercase tracking-wide">Sem Bloqueios Críticos</h4>
+                  <p className="text-xs text-green-600 leading-relaxed mt-2">
+                    Nenhum ponto de bloqueio crítico foi identificado no seu diagnóstico. Isso significa que o modelo possui uma base sólida e não apresenta gargalos jurídicos ou operacionais imediatos que impeçam o processo de formatação.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Next Steps CTA */}
+            <div className="bg-[#1A2840] text-white p-6 md:p-8 rounded-2xl space-y-4">
+              <h3 className="text-lg font-bold text-[#F3C611] flex items-center gap-3">Próximo Passo Recomendado</h3>
+              <p className="text-gray-300 text-xs md:text-sm leading-relaxed">
+                Este pré-diagnóstico mostra <strong>ONDE</strong> estão as maiores lacunas do seu modelo. O passo seguinte é definir <strong>COMO</strong> resolvê-las, em que ordem e com qual viabilidade financeira — e é exatamente isso que a R.Guirado Consultoria faz na formatação completa de franquias: diagnóstico detalhado, engenharia financeira do franqueador e franqueado, manuais operacionais, COF/contrato de franquia, arquitetura de rede e plano de expansão comercial.
+              </p>
+              <p className="text-gray-300 text-xs leading-relaxed">
+                Agende uma conversa de 30 minutos, sem compromisso, para interpretarmos juntos o seu resultado e priorizarmos o que gera mais valor financeiro primeiro.
+              </p>
+              <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-white/60 pt-2">
+                <span>R.Guirado Consultoria</span>
+                <span>•</span>
+                <span>WhatsApp: (44) 99966-5711</span>
+                <span>•</span>
+                <span>E-mail: contato@rguirado.com.br</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'plano' && (
+          <div className="space-y-10">
+            {/* Header info */}
+            <div className="border-b border-gray-100 pb-4 shrink-0">
+              <h2 className="text-xl font-bold text-[#1A2840]">PLANO DE AÇÃO — GERADO AUTOMATICAMENTE</h2>
+              <p className="text-xs text-gray-400 mt-1">As recomendações abaixo mudam conforme suas respostas. Comece pelos itens sinalizados como bloqueio crítico.</p>
+            </div>
+
+            {/* Action Plan Table */}
+            <div className="overflow-x-auto rounded-2xl border border-gray-100 shadow-sm bg-white">
+              <table className="w-full text-left border-collapse min-w-[950px] text-sm">
+                <thead>
+                  <tr className="bg-gray-50 text-gray-500 border-b border-gray-100 font-bold">
+                    <th className="py-4 px-4 w-12 text-center">Nº</th>
+                    <th className="py-4 px-4 w-52">Item avaliado</th>
+                    <th className="py-4 px-4 w-60">Sua resposta</th>
+                    <th className="py-4 px-4 w-16 text-center">Pontos</th>
+                    <th className="py-4 px-4 w-40 text-center">Prioridade</th>
+                    <th className="py-4 px-4">O que fazer</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {diagnosticoFranqueabilidade.map((q, idx) => {
+                    const score = answers[q.id];
+                    const selectedOption = q.options.find(opt => opt.score === score);
+                    const situation = getSituationStyle(score);
+
+                    return (
+                      <tr key={q.id} className={cn(
+                        "hover:bg-gray-50/50",
+                        score !== undefined && score <= 3 ? "bg-red-50/10" : ""
+                      )}>
+                        <td className="py-4 px-4 font-semibold text-gray-400 text-center">{idx + 1}</td>
+                        <td className="py-4 px-4 font-bold text-[#1A2840] leading-snug">{q.text}</td>
+                        <td className="py-4 px-4 text-xs text-gray-600 leading-relaxed">{selectedOption?.text || '-'}</td>
+                        <td className="py-4 px-4 font-bold text-center text-[#1A2840]">{score}</td>
+                        <td className="py-4 px-4 text-center">
+                          <span className={cn(
+                            "inline-block px-2 py-0.5 rounded-full text-[10px] border text-center font-bold min-w-[120px]",
+                            situation.bg
+                          )}>
+                            {situation.label}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 text-xs text-gray-500 leading-relaxed font-medium">
+                          {selectedOption?.recommendation || 'Responda para obter a recomendação.'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* WhatsApp Integration & Rating Stars */}
+            <div className="grid md:grid-cols-2 gap-8 pt-8 border-t border-gray-100">
+              {/* WhatsApp Contact Box */}
+              <div className="bg-[#F8F0E3]/70 border border-[#1F4761]/10 p-6 rounded-2xl flex flex-col justify-between space-y-4">
+                <div className="space-y-2">
+                  <h3 className="font-bold text-[#1A2840] text-md">Quer agendar uma reunião com os especialistas?</h3>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    Transforme este diagnóstico em um cronograma real com prazos, responsáveis e custos. Fale diretamente com a equipe da R.Guirado Consultoria pelo WhatsApp. Clique no botão abaixo para iniciar uma conversa com nossa equipe!
+                  </p>
+                </div>
+                <a
+                  href={`https://wa.me/${whatsappNumber}?text=${whatsappMessage}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold py-3 px-6 rounded-xl shadow-md transition-colors text-sm"
+                >
+                  <Phone className="w-4 h-4 fill-white" /> Entre em contato já
+                </a>
+              </div>
+
+              {/* Feedback Stars Box */}
+              <div className="bg-gray-50 border border-gray-100 p-6 rounded-2xl flex flex-col justify-center items-center text-center space-y-4">
+                <h3 className="font-bold text-[#1A2840] text-sm">Gostou do pré-diagnóstico? Deixe sua avaliação!</h3>
+                <div className="flex gap-2 justify-center">
+                  {[1, 2, 3, 4, 5].map((star) => {
+                    const currentRating = result.feedbackRating || 0;
+                    const isStarred = (ratingHover !== null ? ratingHover : currentRating) >= star;
+                    return (
+                      <button
+                        key={star}
+                        onClick={() => updateResultRating(result.id, star)}
+                        onMouseEnter={() => setRatingHover(star)}
+                        onMouseLeave={() => setRatingHover(null)}
+                        className="cursor-pointer focus:outline-none transition-transform active:scale-90"
                       >
-                        {gaugeData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.fill} />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="absolute bottom-0 left-0 w-full flex flex-col items-center">
-                    <span className="text-5xl font-bold text-[#1A2840]">{score}</span>
-                    <span className={`text-sm font-semibold mt-2 px-3 py-1 rounded-full ${classification.bg} ${classification.color}`}>
-                      {classification.text}
-                    </span>
-                  </div>
+                        <Star className={cn(
+                          "w-8 h-8 transition-colors",
+                          isStarred ? "text-[#F3C611] fill-[#F3C611]" : "text-gray-300"
+                        )} />
+                      </button>
+                    );
+                  })}
                 </div>
+                {result.feedbackRating ? (
+                  <p className="text-xs text-green-600 font-bold">Obrigado pelo seu feedback! Nota {result.feedbackRating}/5 recebida.</p>
+                ) : (
+                  <p className="text-xs text-gray-400">Sua avaliação ajuda a melhorar nossa ferramenta.</p>
+                )}
               </div>
-              <div className="space-y-4">
-                <h3 className="text-lg font-bold text-[#1A2840] mb-6 text-center">Detalhamento por Área</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {chartData.map((item, i) => (
-                    <div key={i} className="bg-gray-50 px-4 py-3 rounded-xl flex items-center justify-between border border-gray-100">
-                      <span className="font-medium text-gray-700 text-sm">{item.subject}</span>
-                      <span className={`font-bold text-sm ${getBarColor(item.A) === '#ef4444' ? 'text-red-600' : getBarColor(item.A) === '#eab308' ? 'text-yellow-600' : getBarColor(item.A) === '#3b82f6' ? 'text-blue-600' : 'text-green-600'}`}>
-                        {item.A}%
-                      </span>
-                    </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Hidden container for rendering the consolidated PDF document */}
+      <div 
+        ref={reportRef} 
+        style={{ 
+          position: 'absolute', 
+          left: '-9999px', 
+          top: '-9999px', 
+          width: '1000px', 
+          backgroundColor: '#ffffff', 
+          color: '#1A2840',
+          padding: '40px 60px'
+        }}
+        className="font-sans space-y-12"
+      >
+        {/* PDF Page 1: Executive Dashboard */}
+        <div className="space-y-10">
+          {/* Header */}
+          <div className="flex justify-between items-start border-b-2 border-gray-100 pb-6">
+            <div>
+              <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">RELATÓRIO PRÉ-DIAGNÓSTICO</span>
+              <h1 className="text-3xl font-black text-[#1A2840] mt-1">{companyName || clientName}</h1>
+              <p className="text-sm text-[#1F4761] font-semibold">R.Guirado Consultoria de Franquias</p>
+            </div>
+            <div className="bg-[#1A2840] text-white px-6 py-4 rounded-xl text-center min-w-[200px]">
+              <span className="text-[9px] opacity-60 font-bold block uppercase">ÍNDICE DE FRANQUEABILIDADE</span>
+              <span className="text-3xl font-black text-[#F3C611]">{overallScore}%</span>
+            </div>
+          </div>
+
+          {/* Client Details Grid */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide">Dados Cadastrados</h3>
+            <div className="grid grid-cols-2 gap-4 bg-gray-50 p-6 rounded-xl border text-xs">
+              <div><strong>Nome Completo:</strong> {clientName}</div>
+              <div><strong>Empresa / Marca:</strong> {companyName || '-'}</div>
+              <div><strong>E-mail:</strong> {email || '-'}</div>
+              <div><strong>WhatsApp:</strong> {phone}</div>
+              <div><strong>Cidade / UF:</strong> {city}</div>
+              <div><strong>Segmento:</strong> {segment || '-'}</div>
+              <div><strong>Tempo de Operação:</strong> {operationTime || '-'}</div>
+              <div><strong>Unidades Próprias:</strong> {ownUnits || '-'}</div>
+              <div><strong>Faturamento Médio:</strong> {revenue || '-'}</div>
+              <div><strong>Data do Diagnóstico:</strong> {new Date(date).toLocaleDateString('pt-BR')}</div>
+            </div>
+          </div>
+
+          {/* Performance Table */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide">Desempenho por Dimensão</h3>
+            <div className="border rounded-xl overflow-hidden shadow-sm">
+              <table className="w-full text-left border-collapse text-[11px]">
+                <thead>
+                  <tr className="bg-gray-50 text-gray-500 font-bold border-b">
+                    <th className="py-2.5 px-3">Dimensão</th>
+                    <th className="py-2.5 px-3 text-center">Pontos obtidos</th>
+                    <th className="py-2.5 px-3 text-center">Aproveitamento (%)</th>
+                    <th className="py-2.5 px-3 text-center">Peso (%)</th>
+                    <th className="py-2.5 px-3 text-center">Contribuição (%)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y font-medium text-gray-700">
+                  {dimensionRows.map((row, i) => (
+                    <tr key={i}>
+                      <td className="py-2.5 px-3 font-semibold">{row.name}</td>
+                      <td className="py-2.5 px-3 text-center">{row.obtained} / {row.max}</td>
+                      <td className="py-2.5 px-3 text-center">{row.aproveitamento}%</td>
+                      <td className="py-2.5 px-3 text-center text-gray-400">{row.weight}%</td>
+                      <td className="py-2.5 px-3 text-center text-[#1F4761] font-bold">{row.contribution}%</td>
+                    </tr>
                   ))}
-                </div>
+                  <tr className="bg-gray-50 font-bold text-gray-800 border-t-2">
+                    <td className="py-2.5 px-3">TOTAL</td>
+                    <td className="py-2.5 px-3 text-center">{dimensionRows.reduce((a, b) => a + b.obtained, 0)} / 250</td>
+                    <td className="py-2.5 px-3 text-center">{Math.round((dimensionRows.reduce((a, b) => a + b.obtained, 0) / 250) * 1000) / 10}%</td>
+                    <td className="py-2.5 px-3 text-center text-gray-400">100%</td>
+                    <td className="py-2.5 px-3 text-center text-[#1A2840] font-extrabold text-sm">{overallScore}%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Classification & Blocking */}
+          <div className="space-y-4">
+            <div className={cn("p-5 rounded-xl border-l-4 border bg-gray-50", classification.hex === '#ef4444' ? 'border-l-red-500' : classification.hex === '#f3c611' ? 'border-l-yellow-500' : 'border-l-green-500')}>
+              <span className="text-[9px] font-extrabold uppercase tracking-widest text-gray-400">Parecer Geral</span>
+              <h3 className={cn("text-lg font-black mt-0.5", classification.color)}>{classification.text}</h3>
+              <p className="text-gray-700 leading-relaxed text-xs mt-2">{classification.description}</p>
+            </div>
+
+            {blockingPointsCount > 0 && (
+              <div className="p-5 bg-red-50 border border-red-200 rounded-xl">
+                <h4 className="text-xs font-bold text-red-700 uppercase tracking-wide">PONTOS DE BLOQUEIO CRÍTICOS IDENTIFICADOS ({blockingPointsCount})</h4>
+                <p className="text-[11px] text-red-600 leading-relaxed mt-1">
+                  Existem itens operacionais ou jurídicos no seu negócio que representam barreiras severas (Bloqueios Críticos) para a replicação do modelo de forma segura no mercado de franquias. Eles devem ser tratados com prioridade máxima.
+                </p>
               </div>
-            </>
-          )}
-        </div>
-        
-        {/* Detailed Answers Section */}
-        <div className="pt-8 border-t border-gray-100">
-          <h3 className="text-xl font-bold text-[#1A2840] mb-6">Detalhamento das Respostas</h3>
-          <div className="space-y-6">
-            {(type === 'empresarial' ? diagnosticoEmpresarial : diagnosticoFranqueabilidade).map((q, index) => {
-              const answerScore = result.answers[q.id] || 0;
-              const selectedOption = q.options.find(opt => opt.score === answerScore);
-              
-              return (
-                <div key={q.id} className="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs font-bold bg-white px-2 py-1 rounded text-gray-500 border border-gray-200">
-                          {q.categoryName}
-                        </span>
-                        <span className="text-xs font-semibold text-gray-400">Questão {index + 1}</span>
-                      </div>
-                      <p className="font-semibold text-[#1A2840] text-base leading-snug mb-3">
-                        {q.text}
-                      </p>
-                      <div className="flex items-start gap-2">
-                        <CheckCircle2 className="w-5 h-5 text-[#22c55e] mt-0.5 shrink-0" />
-                        <p className="text-gray-600 text-sm font-medium">
-                          {selectedOption?.text || "Não respondida"}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0 bg-white rounded-lg px-4 py-3 border border-gray-100 flex flex-col items-center justify-center min-w-[80px]">
-                      <span className="text-xs text-gray-400 font-semibold mb-1">Nota</span>
-                      <span className={`text-2xl font-bold ${answerScore >= 4 ? 'text-green-600' : answerScore >= 3 ? 'text-blue-600' : answerScore >= 2 ? 'text-yellow-600' : 'text-red-600'}`}>
-                        {answerScore}
-                      </span>
-                      <span className="text-[10px] text-gray-400 mt-1">/ 5</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            )}
           </div>
         </div>
 
-        {/* Next Steps */}
-        <div className="bg-[#1A2840] text-white p-8 rounded-2xl mt-8">
-          <h3 className="text-xl font-bold mb-4 flex items-center gap-3">
-            <TrendingUp className="text-[#F3C611]" /> Próximos Passos
-          </h3>
-          <p className="text-gray-300">
-            Com base nestes resultados, recomendamos o agendamento de uma reunião estratégica 
-            com a equipe da R. Guirado para elaboração de um plano de ação direcionado para os pontos críticos identificados.
-          </p>
+        {/* Page Break / Section 2: Detailed Action Plan */}
+        <div style={{ pageBreakBefore: 'always', paddingTop: '40px' }} className="space-y-6">
+          <div className="border-b-2 border-gray-100 pb-3">
+            <h2 className="text-lg font-black text-[#1A2840] uppercase">Roteiro do Plano de Ação Personalizado</h2>
+            <p className="text-[10px] text-gray-400 mt-0.5">Mapeamento de recomendações gerado de acordo com as respostas autodeclaradas.</p>
+          </div>
+
+          <table className="w-full text-left border-collapse text-[10px] border">
+            <thead>
+              <tr className="bg-gray-100 text-gray-500 border-b font-bold">
+                <th className="py-2 px-2 w-8 text-center border">Nº</th>
+                <th className="py-2 px-2 w-32 border">Dimensão</th>
+                <th className="py-2 px-2 w-48 border">Item avaliado</th>
+                <th className="py-2 px-2 w-12 text-center border">Nota</th>
+                <th className="py-2 px-2 border">O que fazer (Recomendação de Consultoria)</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y font-medium text-gray-700">
+              {diagnosticoFranqueabilidade.map((q, idx) => {
+                const score = answers[q.id];
+                const selectedOption = q.options.find(opt => opt.score === score);
+
+                return (
+                  <tr key={q.id} className={cn(score !== undefined && score <= 3 ? "bg-red-50/20" : "")}>
+                    <td className="py-2 px-2 text-center border">{idx + 1}</td>
+                    <td className="py-2 px-2 border text-gray-400 uppercase text-[8px] font-bold">{q.categoryName}</td>
+                    <td className="py-2 px-2 border font-bold text-gray-800">{q.text}</td>
+                    <td className="py-2 px-2 text-center border font-bold">{score}</td>
+                    <td className="py-2 px-2 border text-gray-600 leading-normal text-[9px]">
+                      {selectedOption?.recommendation || '-'}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+
+          <div className="border-t pt-4 text-center text-[9px] text-gray-400">
+            Relatório gerado em {new Date(date).toLocaleDateString('pt-BR')} • R.Guirado Consultoria de Franquias. Todos os direitos reservados.
+          </div>
         </div>
       </div>
     </div>
