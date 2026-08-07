@@ -3,7 +3,7 @@ import { useStore } from '@/src/store';
 import { Card } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Search, Trash2, ExternalLink, BarChart3, Users, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { Search, Trash2, ExternalLink, BarChart3, Users, CheckCircle, AlertTriangle, Loader2, LogOut } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '@/src/lib/supabase';
 
 export function Admin() {
@@ -140,6 +140,21 @@ export function Admin() {
 
   return (
     <div className="space-y-8">
+      {/* Action Bar with Logout */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-6 rounded-2xl border border-gray-100 shadow-sm gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-[#1A2840]">Gerenciador de Pré-Diagnósticos</h2>
+          <p className="text-xs text-gray-500 mt-1">Acompanhe e analise o desempenho das marcas enviadas pelos clientes.</p>
+        </div>
+        <Button 
+          variant="outline" 
+          onClick={() => setAdminAuthenticated(false)}
+          className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 font-semibold gap-1.5 cursor-pointer"
+        >
+          <LogOut className="w-4 h-4" /> Sair do Painel
+        </Button>
+      </div>
+
       {/* Dashboard Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
