@@ -463,10 +463,13 @@ export function Result() {
           <div className="space-y-10">
             {/* Index Header */}
             <div className="grid md:grid-cols-3 gap-6 items-center border-b border-gray-100 pb-8">
-              <div className="md:col-span-2 space-y-1">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Pré-Diagnóstico Finalizado</span>
-                <h1 className="text-3xl font-extrabold text-[#1A2840]">{companyName || clientName}</h1>
-                <p className="text-sm text-gray-500">Segmento: {segment} • Realizado em {formatDateString(date)}</p>
+              <div className="md:col-span-2 space-y-3">
+                <img src="/logo-full.png" alt="R. Guirado Logo" className="h-10 w-auto object-contain" />
+                <div className="space-y-1">
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Pré-Diagnóstico Finalizado</span>
+                  <h1 className="text-3xl font-extrabold text-[#1A2840]">{companyName || clientName}</h1>
+                  <p className="text-sm text-gray-500">Segmento: {segment} • Realizado em {formatDateString(date)}</p>
+                </div>
               </div>
               <div className="flex items-center justify-between sm:justify-end gap-6 bg-[#1A2840] text-white p-5 rounded-2xl">
                 <div className="text-left">
@@ -727,10 +730,13 @@ export function Result() {
         <div className="space-y-10">
           {/* Header */}
           <div className="flex justify-between items-start border-b-2 border-gray-100 pb-6">
-            <div>
-              <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">RELATÓRIO PRÉ-DIAGNÓSTICO</span>
-              <h1 className="text-3xl font-black text-[#1A2840] mt-1">{companyName || clientName}</h1>
-              <p className="text-sm text-[#1F4761] font-semibold">R.Guirado Consultoria de Franquias</p>
+            <div className="space-y-3">
+              <img src="/logo-full.png" alt="R. Guirado Logo" className="h-12 w-auto object-contain" />
+              <div>
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">RELATÓRIO PRÉ-DIAGNÓSTICO</span>
+                <h1 className="text-3xl font-black text-[#1A2840] mt-1">{companyName || clientName}</h1>
+                <p className="text-sm text-[#1F4761] font-semibold">R.Guirado Consultoria de Franquias</p>
+              </div>
             </div>
             <div className="bg-[#1A2840] text-white px-6 py-4 rounded-xl text-center min-w-[200px]">
               <span className="text-[9px] opacity-60 font-bold block uppercase">ÍNDICE DE FRANQUEABILIDADE</span>

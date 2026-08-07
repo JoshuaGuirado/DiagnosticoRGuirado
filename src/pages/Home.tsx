@@ -49,7 +49,7 @@ export function Home() {
             </p>
             <div className="mt-auto flex justify-between items-center">
               <div className="text-[10px] uppercase tracking-widest font-bold text-[#1F4761]">
-                20 Questões • 10 Áreas
+                25 Questões • 5 Dimensões
               </div>
               <button className="px-6 py-3 bg-[#1A2840] text-white font-bold rounded-xl shadow-lg shadow-[#1A2840]/20 group-hover:scale-105 transition-transform">
                 Iniciar

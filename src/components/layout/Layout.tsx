@@ -12,14 +12,8 @@ export function Layout() {
     <div className="h-screen w-full flex bg-[#F8F0E3] font-sans overflow-hidden text-[#1A2840]">
       {/* Sidebar */}
       <aside className="w-64 bg-[#1A2840] h-full flex flex-col text-white shadow-xl shrink-0 z-10 hidden md:flex border-r">
-        <div className="p-8 flex items-center gap-3 border-b border-[#1F4761]">
-          <div className="w-10 h-10 bg-[#F3C611] rounded-lg flex items-center justify-center font-bold text-[#1A2840] text-xl">
-            RG
-          </div>
-          <div>
-            <h1 className="text-xs font-bold tracking-widest leading-none">R. GUIRADO</h1>
-            <p className="text-[10px] opacity-60 tracking-tight">CONSULTORIA</p>
-          </div>
+        <div className="p-8 flex items-center justify-center border-b border-[#1F4761]">
+          <img src="/logo-full.png" alt="R. Guirado Logo" className="h-12 w-auto object-contain" />
         </div>
         
         <nav className="flex-1 py-8 px-4 space-y-2 overflow-y-auto">
@@ -49,9 +43,7 @@ export function Layout() {
       <main className="flex-1 flex flex-col p-6 md:p-10 overflow-hidden min-w-0">
         <header className="flex justify-between items-center mb-8 shrink-0">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-[#F3C611] rounded-lg flex md:hidden items-center justify-center font-bold text-[#1A2840] text-xl shrink-0">
-              RG
-            </div>
+            <img src="/logo.png" alt="R. Guirado" className="w-10 h-10 object-contain flex md:hidden shrink-0" />
             <div>
               <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-1">
                 {isAdmin ? 'Painel Administrativo' : 'Painel de Consultoria'}

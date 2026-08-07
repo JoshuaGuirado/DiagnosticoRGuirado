@@ -261,14 +261,13 @@ export function Diagnostic() {
           <div className="space-y-10">
             {/* Header Title */}
             <div className="border-b border-gray-100 pb-6">
-              <h2 className="text-[#1A2840] font-bold text-xs uppercase tracking-widest leading-none mb-2">R.Guirado Consultoria</h2>
+              <img src="/logo-full.png" alt="R. Guirado Logo" className="h-12 w-auto object-contain mb-3" />
               <h1 className="text-2xl md:text-3xl font-extrabold text-[#1F4761]">PRÉ-DIAGNÓSTICO DE FRANQUIAS</h1>
               <p className="text-gray-500 mt-3 text-sm md:text-base max-w-4xl leading-relaxed">
                 Descubra, em poucos minutos, o quanto o seu negócio está preparado para se transformar em uma rede de franquias — e exatamente o que falta para chegar lá.
               </p>
             </div>
 
-            {/* Grid Form */}
             <div className="space-y-6">
               <h3 className="text-lg font-bold text-[#1A2840] uppercase tracking-wide border-b border-gray-100 pb-2">Seus Dados</h3>
               <div className="grid md:grid-cols-2 gap-6">
