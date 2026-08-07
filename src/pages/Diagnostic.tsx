@@ -6,6 +6,7 @@ import { diagnosticoFranqueabilidade } from '@/src/data/questions';
 import { useStore } from '@/src/store';
 import { cn } from '@/src/lib/utils';
 import { Lock, FileText, ClipboardList, AlertTriangle, ArrowRight, ArrowLeft, CheckCircle2, Phone } from 'lucide-react';
+import { supabase, isSupabaseConfigured } from '@/src/lib/supabase';
 
 export function Diagnostic() {
   const { type } = useParams<{ type: string }>();
@@ -131,7 +132,7 @@ export function Diagnostic() {
 
   const totalAnswered = Object.keys(answers).filter(k => answers[k] !== undefined).length;
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     if (totalAnswered < questions.length) return;
 
     const { score, categoryScores, categoryMaxScores } = calculateResult(answers);
@@ -160,7 +161,41 @@ export function Diagnostic() {
       answers
     };
 
+    // Save locally first as a secure backup
     addResult(newResult);
+
+    // Save to Supabase database if configured
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { error } = await supabase
+          .from('diagnostics')
+          .insert([{
+            id: newResult.id,
+            type: newResult.type,
+            client_name: newResult.clientName,
+            company_name: newResult.companyName,
+            email: newResult.email,
+            phone: newResult.phone,
+            city: newResult.city,
+            segment: newResult.segment,
+            operation_time: newResult.operationTime,
+            own_units: newResult.ownUnits,
+            revenue: newResult.revenue,
+            date: newResult.date,
+            score: newResult.score,
+            category_scores: newResult.categoryScores,
+            category_max_scores: newResult.categoryMaxScores,
+            answers: newResult.answers
+          }]);
+
+        if (error) {
+          console.error('Error saving to Supabase:', error);
+        }
+      } catch (err) {
+        console.error('Failed to save to Supabase:', err);
+      }
+    }
+
     navigate(`/resultado/${resultId}`);
   };
 

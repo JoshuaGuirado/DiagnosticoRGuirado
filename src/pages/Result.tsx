@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useStore } from '@/src/store';
 import { Card } from '@/src/components/ui/card';
@@ -11,6 +11,7 @@ import { jsPDF } from 'jspdf';
 import { toPng } from 'html-to-image';
 import { diagnosticoFranqueabilidade } from '../data/questions';
 import { cn } from '@/src/lib/utils';
+import { supabase, isSupabaseConfigured } from '@/src/lib/supabase';
 
 // Timezone-agnostic date formatter
 const formatDateString = (dateStr: string) => {
@@ -25,18 +26,108 @@ export function Result() {
   const { id } = useParams<{ id: string }>();
   const results = useStore(state => state.results);
   const updateResultRating = useStore(state => state.updateResultRating);
-  
-  const result = results.find(r => r.id === id);
+  const addResult = useStore(state => state.addResult);
+
+  const localResult = results.find(r => r.id === id);
+  const [dbResult, setDbResult] = useState<any | null>(null);
+  const [loading, setLoading] = useState(!localResult);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (localResult) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchResult = async () => {
+      if (isSupabaseConfigured && supabase && id) {
+        try {
+          const { data, error } = await supabase
+            .from('diagnostics')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+          if (error) {
+            console.error('Error fetching from Supabase:', error);
+            setErrorMsg('Não foi possível encontrar o resultado no servidor.');
+          } else if (data) {
+            const mappedResult = {
+              id: data.id,
+              type: data.type,
+              clientName: data.client_name,
+              companyName: data.company_name,
+              email: data.email,
+              phone: data.phone,
+              city: data.city,
+              segment: data.segment,
+              operationTime: data.operation_time,
+              ownUnits: data.own_units,
+              revenue: data.revenue,
+              date: data.date,
+              score: Number(data.score),
+              categoryScores: data.category_scores,
+              categoryMaxScores: data.category_max_scores,
+              answers: data.answers,
+              feedbackRating: data.feedback_rating
+            };
+            addResult(mappedResult);
+            setDbResult(mappedResult);
+          }
+        } catch (err) {
+          console.error('Failed to fetch from Supabase:', err);
+          setErrorMsg('Erro de conexão ao buscar o resultado.');
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    };
+
+    fetchResult();
+  }, [id, localResult, addResult]);
+
+  const result = localResult || dbResult;
+
+  const handleRate = async (rating: number) => {
+    if (!result) return;
+    updateResultRating(result.id, rating);
+    if (dbResult) {
+      setDbResult({ ...dbResult, feedbackRating: rating });
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase
+          .from('diagnostics')
+          .update({ feedback_rating: rating })
+          .eq('id', result.id);
+      } catch (err) {
+        console.error('Failed to update rating in Supabase:', err);
+      }
+    }
+  };
+
   const reportRef = useRef<HTMLDivElement>(null);
 
   const [activeTab, setActiveTab] = useState<'resultado' | 'plano' | 'inicio' | 'respostas'>('resultado');
   const [ratingHover, setRatingHover] = useState<number | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
+  if (loading) {
+    return (
+      <div className="text-center py-20 bg-white rounded-3xl border shadow-sm flex flex-col items-center justify-center space-y-4">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1F4761]"></div>
+        <p className="text-gray-500 font-semibold">Carregando resultado do pré-diagnóstico...</p>
+      </div>
+    );
+  }
+
   if (!result) {
     return (
       <div className="text-center py-20 bg-white rounded-3xl border shadow-sm">
-        <h2 className="text-2xl font-bold mb-4 text-[#1A2840]">Resultado não encontrado</h2>
+        <h2 className="text-2xl font-bold mb-4 text-[#1A2840]">{errorMsg || 'Resultado não encontrado'}</h2>
         <Link to="/"><Button>Voltar ao Início</Button></Link>
       </div>
     );
@@ -585,7 +676,7 @@ export function Result() {
                     return (
                       <button
                         key={star}
-                        onClick={() => updateResultRating(result.id, star)}
+                        onClick={() => handleRate(star)}
                         onMouseEnter={() => setRatingHover(star)}
                         onMouseLeave={() => setRatingHover(null)}
                         className="cursor-pointer focus:outline-none transition-transform active:scale-90"

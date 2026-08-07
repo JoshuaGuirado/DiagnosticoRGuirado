@@ -1,14 +1,90 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '@/src/store';
 import { Card } from '@/src/components/ui/card';
 import { Button } from '@/src/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Search, Trash2, ExternalLink, BarChart3, Users, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Search, Trash2, ExternalLink, BarChart3, Users, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { supabase, isSupabaseConfigured } from '@/src/lib/supabase';
 
 export function Admin() {
   const { results, deleteResult, isAdminAuthenticated, setAdminAuthenticated } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [password, setPassword] = useState('');
+  
+  const [dbResults, setDbResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(isSupabaseConfigured);
+
+  const fetchDbResults = async () => {
+    if (!isAdminAuthenticated || !isSupabaseConfigured || !supabase) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('diagnostics')
+        .select('*')
+        .order('date', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching admin data:', error);
+      } else if (data) {
+        const mapped = data.map(item => ({
+          id: item.id,
+          type: item.type,
+          clientName: item.client_name,
+          companyName: item.company_name,
+          email: item.email,
+          phone: item.phone,
+          city: item.city,
+          segment: item.segment,
+          operationTime: item.operation_time,
+          ownUnits: item.own_units,
+          revenue: item.revenue,
+          date: item.date,
+          score: Number(item.score),
+          categoryScores: item.category_scores,
+          categoryMaxScores: item.category_max_scores,
+          answers: item.answers,
+          feedbackRating: item.feedback_rating
+        }));
+        setDbResults(mapped);
+      }
+    } catch (err) {
+      console.error('Failed to fetch admin data from Supabase:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAdminAuthenticated) {
+      fetchDbResults();
+    }
+  }, [isAdminAuthenticated]);
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir este diagnóstico do banco de dados?')) {
+      return;
+    }
+
+    // Delete locally
+    deleteResult(id);
+    setDbResults(prev => prev.filter(r => r.id !== id));
+
+    // Delete remotely in Supabase
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { error } = await supabase
+          .from('diagnostics')
+          .delete()
+          .eq('id', id);
+
+        if (error) {
+          console.error('Error deleting from Supabase:', error);
+        }
+      } catch (err) {
+        console.error('Failed to delete from Supabase:', err);
+      }
+    }
+  };
 
   if (!isAdminAuthenticated) {
     return (
@@ -49,16 +125,18 @@ export function Admin() {
     );
   }
 
-  const filteredResults = results.filter(r => 
+  const displayResults = isSupabaseConfigured ? dbResults : results;
+
+  const filteredResults = displayResults.filter(r => 
     r.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
     r.type.toLowerCase().includes(searchTerm.toLowerCase())
   ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   // Stats
-  const total = results.length;
-  const avgScore = total > 0 ? Math.round(results.reduce((acc, r) => acc + r.score, 0) / total) : 0;
-  const readyToExpand = results.filter(r => r.type === 'empresarial' && r.score >= 81).length;
-  const franchisable = results.filter(r => r.type === 'franqueabilidade' && r.score >= 81).length;
+  const total = displayResults.length;
+  const avgScore = total > 0 ? Math.round(displayResults.reduce((acc, r) => acc + r.score, 0) / total) : 0;
+  const readyToExpand = displayResults.filter(r => r.type === 'empresarial' && r.score >= 81).length;
+  const franchisable = displayResults.filter(r => r.type === 'franqueabilidade' && r.score >= 81).length;
 
   return (
     <div className="space-y-8">
@@ -120,7 +198,7 @@ export function Admin() {
             />
           </div>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -133,7 +211,16 @@ export function Admin() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filteredResults.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-5 h-5 animate-spin text-[#1F4761]" />
+                      <span>Carregando diagnósticos do Supabase...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredResults.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
                     Nenhum diagnóstico encontrado.
@@ -178,11 +265,7 @@ export function Admin() {
                           variant="ghost" 
                           size="sm" 
                           className="h-8 w-8 p-0" 
-                          onClick={() => {
-                            if(window.confirm('Tem certeza que deseja excluir este diagnóstico?')) {
-                              deleteResult(r.id);
-                            }
-                          }}
+                          onClick={() => handleDelete(r.id)}
                           title="Excluir"
                         >
                           <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />

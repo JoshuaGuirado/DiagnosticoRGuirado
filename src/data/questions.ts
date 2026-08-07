@@ -1,6 +1,7 @@
 export type Option = {
   text: string;
   score: number;
+  recommendation?: string;
 };
 
 export type Question = {
