@@ -99,7 +99,7 @@ export function Admin() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && password === 'admin123') {
+                  if (e.key === 'Enter' && password === 'lualyjo@123') {
                     setAdminAuthenticated(true);
                   }
                 }}
@@ -110,7 +110,7 @@ export function Admin() {
             <Button 
               className="w-full" 
               onClick={() => {
-                if (password === 'admin123') {
+                if (password === 'lualyjo@123') {
                   setAdminAuthenticated(true);
                 } else {
                   alert('Senha incorreta!');
