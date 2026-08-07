@@ -59,7 +59,7 @@ export function Layout() {
                 {isAdmin ? 'Painel Administrativo' : 'Painel de Consultoria'}
               </h2>
               <p className="text-[#1A2840] opacity-60 text-sm md:text-base hidden sm:block">
-                {isAdmin ? 'Gerencie todos os diagnósticos realizados.' : 'Selecione a avaliação estratégica para iniciar o diagnóstico.'}
+                {isAdmin ? 'Gerencie todos os pré-diagnósticos realizados.' : 'Selecione a avaliação estratégica para iniciar o pré-diagnóstico.'}
               </p>
             </div>
           </div>

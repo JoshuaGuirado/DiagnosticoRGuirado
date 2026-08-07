@@ -20,7 +20,7 @@ export function Home() {
             <div className="w-14 h-14 bg-gray-200 rounded-2xl flex items-center justify-center mb-6">
               <Building2 className="w-7 h-7 text-gray-400" />
             </div>
-            <h3 className="text-xl font-bold mb-3 text-gray-500">Diagnóstico Empresarial</h3>
+            <h3 className="text-xl font-bold mb-3 text-gray-500">Pré-Diagnóstico Empresarial</h3>
             <p className="text-sm text-gray-400 mb-8 leading-relaxed">
               Análise completa de 360º abrangendo Estratégia, Finanças, Comercial, Operações, RH e Tecnologia.
             </p>
@@ -43,7 +43,7 @@ export function Home() {
             <div className="w-14 h-14 card-gradient rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-[#1A2840]/20">
               <TrendingUp className="w-7 h-7 text-[#F3C611]" />
             </div>
-            <h3 className="text-xl font-bold mb-3">Diagnóstico de Franqueabilidade</h3>
+            <h3 className="text-xl font-bold mb-3">Pré-Diagnóstico de Franqueabilidade</h3>
             <p className="text-sm opacity-60 mb-8 leading-relaxed">
               Avaliação técnica para medir o potencial de escalabilidade e replicação do modelo de negócio.
             </p>
@@ -74,7 +74,7 @@ export function Home() {
         <div className="space-y-4 overflow-y-auto pr-2 pb-2">
           {recentResults.length === 0 ? (
             <div className="text-center py-10 text-gray-500 text-sm">
-              Nenhum diagnóstico realizado ainda.
+              Nenhum pré-diagnóstico realizado ainda.
             </div>
           ) : (
             recentResults.map(r => (

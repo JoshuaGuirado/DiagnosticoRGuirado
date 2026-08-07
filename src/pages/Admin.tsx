@@ -61,7 +61,7 @@ export function Admin() {
   }, [isAdminAuthenticated]);
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este diagnóstico do banco de dados?')) {
+    if (!window.confirm('Tem certeza que deseja excluir este pré-diagnóstico do banco de dados?')) {
       return;
     }
 
@@ -148,7 +148,7 @@ export function Admin() {
               <Users className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-sm text-gray-500 font-medium mb-1">Total de Diagnósticos</p>
+          <p className="text-sm text-gray-500 font-medium mb-1">Total de Pré-Diagnósticos</p>
           <h3 className="text-3xl font-bold text-[#1A2840]">{total}</h3>
         </Card>
         
@@ -216,14 +216,14 @@ export function Admin() {
                   <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="w-5 h-5 animate-spin text-[#1F4761]" />
-                      <span>Carregando diagnósticos do Supabase...</span>
+                      <span>Carregando pré-diagnósticos do Supabase...</span>
                     </div>
                   </td>
                 </tr>
               ) : filteredResults.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
-                    Nenhum diagnóstico encontrado.
+                    Nenhum pré-diagnóstico encontrado.
                   </td>
                 </tr>
               ) : (

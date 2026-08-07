@@ -576,7 +576,7 @@ export function Result() {
                 <div>
                   <h4 className="text-sm font-bold text-green-700 uppercase tracking-wide">Sem Bloqueios Críticos</h4>
                   <p className="text-xs text-green-600 leading-relaxed mt-2">
-                    Nenhum ponto de bloqueio crítico foi identificado no seu diagnóstico. Isso significa que o modelo possui uma base sólida e não apresenta gargalos jurídicos ou operacionais imediatos que impeçam o processo de formatação.
+                    Nenhum ponto de bloqueio crítico foi identificado no seu pré-diagnóstico. Isso significa que o modelo possui uma base sólida e não apresenta gargalos jurídicos ou operacionais imediatos que impeçam o processo de formatação.
                   </p>
                 </div>
               </div>
@@ -668,7 +668,7 @@ export function Result() {
                 <div className="space-y-2">
                   <h3 className="font-bold text-[#1A2840] text-sm uppercase tracking-wide">Quer agendar uma reunião com os especialistas?</h3>
                   <p className="text-xs text-gray-600 leading-relaxed">
-                    Transforme este diagnóstico em um plano estratégico real para estruturar sua franquia de forma lucrativa e segura. Entre em contato direto com a equipe R.Guirado.
+                    Transforme este pré-diagnóstico em um plano estratégico real para estruturar sua franquia de forma lucrativa e segura. Entre em contato direto com a equipe R.Guirado.
                   </p>
                 </div>
                 <a
@@ -781,7 +781,7 @@ export function Result() {
               <div><strong>Tempo de Operação:</strong> {operationTime || '-'}</div>
               <div><strong>Unidades Próprias:</strong> {ownUnits || '-'}</div>
               <div><strong>Faturamento Médio:</strong> {revenue || '-'}</div>
-              <div><strong>Data do Diagnóstico:</strong> {formatDateString(date)}</div>
+              <div><strong>Data do Pré-Diagnóstico:</strong> {formatDateString(date)}</div>
             </div>
           </div>
 

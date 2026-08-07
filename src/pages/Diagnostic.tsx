@@ -449,7 +449,7 @@ export function Diagnostic() {
               <div className="flex gap-3 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-xl">
                 <AlertTriangle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
                 <p className="text-xs text-blue-700 leading-relaxed font-medium">
-                  <strong>IMPORTANTE:</strong> este é um instrumento de pré-diagnóstico, de caráter indicativo e autodeclaratório. Ele não substitui um diagnóstico de franqueabilidade completo, que envolve verificação documental, análise financeira detalhada e avaliação jurídica da marca e dos contratos. Serve para revelar, com rapidez e honestidade, onde estão as suas maiores lacunas.
+                  <strong>IMPORTANTE:</strong> este é um instrumento de pré-diagnóstico, de caráter indicativo e autodeclaratório. Ele não substitui um pré-diagnóstico de franqueabilidade completo, que envolve verificação documental, análise financeira detalhada e avaliação jurídica da marca e dos contratos. Serve para revelar, com rapidez e honestidade, onde estão as suas maiores lacunas.
                 </p>
               </div>
 
@@ -593,7 +593,7 @@ export function Diagnostic() {
                 </div>
               </div>
             ) : (
-              /* Step 5: Finalizar Diagnóstico Screen */
+              /* Step 5: Finalizar Pré-Diagnóstico Screen */
               <div className="max-w-2xl mx-auto py-10 text-center space-y-8">
                 <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto border border-green-200">
                   <CheckCircle2 className="w-10 h-10 text-green-600" />
