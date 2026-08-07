@@ -261,7 +261,19 @@ export function Diagnostic() {
           <div className="space-y-10">
             {/* Header Title */}
             <div className="border-b border-gray-100 pb-6">
-              <img src="/logo-full.png" alt="R. Guirado Logo" className="h-12 w-auto object-contain mb-3" />
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#1A2840]/5 border border-[#1A2840]/10 p-2 shrink-0">
+                  <img src="/logo.png" alt="R. Guirado Emblem" className="h-full w-full object-contain" />
+                </div>
+                <div>
+                  <h2 className="font-heading font-black text-base tracking-tight leading-none text-[#1A2840]">
+                    R.Guirado
+                  </h2>
+                  <p className="text-[9px] text-[#F3C012] font-extrabold tracking-widest uppercase mt-0.5">
+                    Franchising
+                  </p>
+                </div>
+              </div>
               <h1 className="text-2xl md:text-3xl font-extrabold text-[#1F4761]">PRÉ-DIAGNÓSTICO DE FRANQUIAS</h1>
               <p className="text-gray-500 mt-3 text-sm md:text-base max-w-4xl leading-relaxed">
                 Descubra, em poucos minutos, o quanto o seu negócio está preparado para se transformar em uma rede de franquias — e exatamente o que falta para chegar lá.

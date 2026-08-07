@@ -463,8 +463,20 @@ export function Result() {
           <div className="space-y-10">
             {/* Index Header */}
             <div className="grid md:grid-cols-3 gap-6 items-center border-b border-gray-100 pb-8">
-              <div className="md:col-span-2 space-y-3">
-                <img src="/logo-full.png" alt="R. Guirado Logo" className="h-10 w-auto object-contain" />
+              <div className="md:col-span-2 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#1A2840]/5 border border-[#1A2840]/10 p-2 shrink-0">
+                    <img src="/logo.png" alt="R. Guirado Emblem" className="h-full w-full object-contain" />
+                  </div>
+                  <div>
+                    <h2 className="font-heading font-black text-base tracking-tight leading-none text-[#1A2840]">
+                      R.Guirado
+                    </h2>
+                    <p className="text-[9px] text-[#F3C012] font-extrabold tracking-widest uppercase mt-0.5">
+                      Franchising
+                    </p>
+                  </div>
+                </div>
                 <div className="space-y-1">
                   <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Pré-Diagnóstico Finalizado</span>
                   <h1 className="text-3xl font-extrabold text-[#1A2840]">{companyName || clientName}</h1>
@@ -730,8 +742,20 @@ export function Result() {
         <div className="space-y-10">
           {/* Header */}
           <div className="flex justify-between items-start border-b-2 border-gray-100 pb-6">
-            <div className="space-y-3">
-              <img src="/logo-full.png" alt="R. Guirado Logo" className="h-12 w-auto object-contain" />
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 flex items-center justify-center rounded-xl bg-gray-50 border border-gray-200 p-2 shrink-0">
+                  <img src="/logo.png" alt="R. Guirado Emblem" className="h-full w-full object-contain" />
+                </div>
+                <div>
+                  <h2 className="font-heading font-black text-lg tracking-tight leading-none text-[#1A2840]">
+                    R.Guirado
+                  </h2>
+                  <p className="text-[10px] text-[#F3C012] font-extrabold tracking-widest uppercase mt-0.5">
+                    Franchising
+                  </p>
+                </div>
+              </div>
               <div>
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">RELATÓRIO PRÉ-DIAGNÓSTICO</span>
                 <h1 className="text-3xl font-black text-[#1A2840] mt-1">{companyName || clientName}</h1>

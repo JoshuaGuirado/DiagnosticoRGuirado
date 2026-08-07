@@ -11,9 +11,19 @@ export function Layout() {
   return (
     <div className="h-screen w-full flex bg-[#F8F0E3] font-sans overflow-hidden text-[#1A2840]">
       {/* Sidebar */}
-      <aside className="w-64 bg-[#1A2840] h-full flex flex-col text-white shadow-xl shrink-0 z-10 hidden md:flex border-r">
-        <div className="p-8 flex items-center justify-center border-b border-[#1F4761]">
-          <img src="/logo-full.png" alt="R. Guirado Logo" className="h-12 w-auto object-contain" />
+      <aside className="w-64 bg-[#1A2840] h-full flex flex-col text-white shadow-xl shrink-0 z-10 hidden md:flex border-r border-[#1F4761]/10">
+        <div className="p-6 flex items-center gap-3 border-b border-[#1F4761]">
+          <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 p-2 shrink-0">
+            <img src="/logo.png" alt="R. Guirado Logo" className="h-full w-full object-contain" />
+          </div>
+          <div className="flex flex-col justify-center">
+            <h1 className="font-heading font-black text-lg tracking-tight leading-none text-white">
+              R.Guirado
+            </h1>
+            <p className="text-[10px] text-[#F3C012] font-bold tracking-widest uppercase mt-0.5">
+              Franchising
+            </p>
+          </div>
         </div>
         
         <nav className="flex-1 py-8 px-4 space-y-2 overflow-y-auto">
